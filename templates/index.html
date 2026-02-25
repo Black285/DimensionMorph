@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="/icon.png">
+    <title>Cartesian to Polar Coordinate Transformer</title>
+    <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #d26e6e 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 100fr;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            animation: slideDown 0.6s ease-out;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 25fr 5px 75fr;
+            gap: 0;
+            margin-bottom: 20px;
+            height: calc(100vh - 0px);
+        }
+        
+        .separator {
+            background: white;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        
+        .separator canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        
+        .control-panel {
+            background: white;
+            padding: 30px;
+            border-radius: 10px 0 0 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            animation: slideRight 0.6s ease-out;
+            overflow-y: auto;
+            max-height: 100%;
+        }
+        
+        .control-panel h2 {
+            color: #667eea;
+            margin-bottom: 25px;
+            font-size: 1.5em;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+        
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 1em;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s ease;
+        }
+        
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            background: white;
+            cursor: pointer;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.2);
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 12px 20px;
+            font-size: 1em;
+            font-weight: 600;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-plot {
+            background: linear-gradient(135deg, #62c5ca 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-plot:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-plot:active {
+            transform: translateY(0);
+        }
+        
+        .btn-reset {
+            background: #f0f0f0;
+            color: #333;
+        }
+        
+        .btn-reset:hover {
+            background: #e0e0e0;
+        }
+        
+        .examples {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .examples h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 0.95em;
+        }
+        
+        .examples-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .example-btn {
+            background: white;
+            color: #667eea;
+            padding: 8px 12px;
+            border: 1px solid #667eea;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.2s ease;
+        }
+        
+        .example-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+        
+        .plot-container {
+            background: white;
+            padding: 20px;
+            border-radius: 0 10px 10px 0;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            animation: slideLeft 0.6s ease-out;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
+            position: relative;
+            min-height: 0;
+        }
+        
+        .plot-container h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            flex-shrink: 0;
+        }
+        
+        .plots-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            flex: 1;
+            overflow: auto;
+            min-height: 0;
+        }
+        
+        .plot-box {
+            background: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            position: relative;
+            width: 100%;
+            display: block;
+            overflow: hidden;
+        }
+        
+        .plot-image {
+            width: 100%;
+            height: auto;
+            border-radius: 5px;
+            display: none;
+        }
+        
+        .plot-image.show {
+            display: block;
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        /* Temporarily hide plots 1 and 2 for debugging */
+        /* #plot1, #plot2 {
+            display: none;
+        } */
+        
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+            display: none;
+            font-size: 1.1em;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 100;
+        }
+        
+        .loading.show {
+            display: block;
+        }
+        
+        .success-message {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            background: #51cf66;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 5px;
+            display: none;
+            animation: slideUp 0.3s ease-out;
+            z-index: 200;
+        }
+        
+        .success-message.show {
+            display: block;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes slideRight {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        @keyframes slideLeft {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .function-help {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+            border-left: 4px solid #2196f3;
+            font-size: 0.9em;
+            color: #333;
+        }
+        
+        .function-help h4 {
+            color: #2196f3;
+            margin-bottom: 8px;
+        }
+        
+        .function-help code {
+            background: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #667eea;
+        }
+        
+        .range-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        .btn-add-param {
+            background: #667eea;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-add-param:hover {
+            background: #764ba2;
+        }
+        
+        .parameter-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            position: relative;
+        }
+        
+        .parameter-item input[type="text"] {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            background: #f9f9f9;
+            width: 70px;
+            flex-shrink: 0;
+        }
+        
+        .parameter-slider-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .parameter-slider-wrapper {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+        
+        .parameter-slider-wrapper input[type="number"] {
+            width: auto;
+            padding: 6px 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 0.8em;
+            flex-shrink: 0;
+            min-width: 50px;
+        }
+        
+        /* Remove spinner arrows from number inputs */
+        .parameter-slider-wrapper input[type="number"]::-webkit-outer-spin-button,
+        .parameter-slider-wrapper input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        
+        .parameter-slider-wrapper input[type="number"][type="number"] {
+            appearance: calc();
+            -moz-appearance: textfield;
+        }
+        
+        .parameter-item input[type="range"] {
+            flex: 1;
+            height: 8px;
+            cursor: pointer;
+            -webkit-appearance: none;
+            appearance: none;
+            background: linear-gradient(to right, #ffffff 0%, #ffffff 100%);
+            border-radius: 5px;
+            outline: none;
+            min-width: 100px;
+        }
+        
+        .parameter-item input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 2px;
+            height: 16px;
+            border-radius: 1px;
+            background: #667eea;
+            cursor: pointer;
+            box-shadow: 0 1px 4px rgba(102, 126, 234, 0.4);
+            border: none;
+            transition: all 0.2s ease;
+        }
+        
+        .parameter-item input[type="range"]::-webkit-slider-thumb:hover {
+            height: 20px;
+            background: #764ba2;
+            box-shadow: 0 2px 6px rgba(102, 126, 234, 0.6);
+        }
+        
+        .parameter-item input[type="range"]::-moz-range-thumb {
+            width: 2px;
+            height: 16px;
+            border-radius: 1px;
+            background: #667eea;
+            cursor: pointer;
+            box-shadow: 0 1px 4px rgba(102, 126, 234, 0.4);
+            border: none;
+            transition: all 0.2s ease;
+        }
+        
+        .parameter-item input[type="range"]::-moz-range-thumb:hover {
+            height: 20px;
+            background: #764ba2;
+            box-shadow: 0 2px 6px rgba(102, 126, 234, 0.6);
+        }
+        
+        .parameter-min-max {
+            text-align: center;
+            font-size: 0.7em;
+            color: #999;
+            font-family: 'Courier New', monospace;
+            letter-spacing: -1px;
+        }
+        
+        .parameter-value {
+            text-align: center;
+            font-weight: bold;
+            color: #667eea;
+            font-family: 'Courier New', monospace;
+            width: 50px;
+            flex-shrink: 0;
+        }
+        
+        .btn-remove-param {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 2px 6px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.9em;
+            width: auto;
+            min-width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            font-weight: bold;
+        }
+        
+        .btn-remove-param:hover {
+            background: #ff5252;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+            
+            .separator {
+                display: none;
+            }
+            
+            .control-panel {
+                border-radius: 10px;
+            }
+            
+            .plot-container {
+                border-radius: 10px;
+                margin-top: 20px;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔄 Cartesian to Polar Transformer</h1>
+            <p>Visualize how any function transforms from Cartesian to Polar coordinates</p>
+        </div>
+        
+        <div class="main-content">
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <h2>Function Input</h2>
+                
+                <div class="form-group">
+                    <label for="mode">Select Mode:</label>
+                    <select id="mode" onchange="toggleMode()">
+                        <option value="2d">2D Function: y = f(x)</option>
+                        <option value="3d">3D Function: z = f(x, y)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" id="expr2d">
+                    <label for="expression">Enter your function:</label>
+                    <textarea id="expression" placeholder="e.g., sin(x), x**2, sqrt(x), exp(-x)*sin(x)"></textarea>
+                </div>
+                
+                <div class="form-group" id="expr3d" style="display:none;">
+                    <label for="expression3d">Enter your 3D function:</label>
+                    <textarea id="expression3d" placeholder="e.g., sin(x)*cos(y), x**2 + y**2, sqrt(x**2 + y**2)"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>Parameters:</label>
+                    <div id="parameters-container" style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin-top: 10px;">
+                        <button class="btn-add-param" onclick="addParameter()">+ Add Parameter</button>
+                        <div id="params-list" style="margin-top: 10px;"></div>
+                    </div>
+                </div>
+                
+                <div class="form-group" id="range2d">
+                    <label>X Range:</label>
+                    <div class="range-inputs">
+                        <input type="number" id="x_min" value="-5" placeholder="Min X" onchange="debounceReplot()">
+                        <input type="number" id="x_max" value="5" placeholder="Max X" onchange="debounceReplot()">
+                    </div>
+                </div>
+                
+                <div class="form-group" id="range3d" style="display:none;">
+                    <label>Range:</label>
+                    <div class="range-inputs" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
+                        <input type="number" id="x_min_3d" value="-3" placeholder="Min X" onchange="debounceReplot()">
+                        <input type="number" id="x_max_3d" value="3" placeholder="Max X" onchange="debounceReplot()">
+                        <input type="number" id="y_min_3d" value="-3" placeholder="Min Y" onchange="debounceReplot()">
+                        <input type="number" id="y_max_3d" value="3" placeholder="Max Y" onchange="debounceReplot()">
+                    </div>
+                </div>
+                
+                <div class="button-group">
+                    <button class="btn-plot" onclick="plotFunction()">Plot</button>
+                    <button class="btn-reset" onclick="resetForm()">Reset</button>
+                </div>
+                
+                <div class="error-message" id="errorMessage"></div>
+                
+                <div class="function-help">
+                    <h4>📝 Available Functions:</h4>
+                    <p>
+                        <strong>Trigonometric:</strong> <code>sin</code>, <code>cos</code>, <code>tan</code>, <code>asin</code>, <code>acos</code>, <code>atan</code>, <code>atan2</code>
+                    </p>
+                    <p>
+                        <strong>Hyperbolic:</strong> <code>sinh</code>, <code>cosh</code>, <code>tanh</code>, <code>asinh</code>, <code>acosh</code>, <code>atanh</code>
+                    </p>
+                    <p>
+                        <strong>Exponential & Logarithmic:</strong> <code>exp</code>, <code>log</code>, <code>log10</code>, <code>log2</code>, <code>sqrt</code>, <code>pow</code>
+                    </p>
+                    <p>
+                        <strong>Rounding:</strong> <code>abs</code>, <code>ceil</code>, <code>floor</code>, <code>round</code>, <code>sign</code>
+                    </p>
+                    <p>
+                        <strong>Min/Max:</strong> <code>min</code>, <code>max</code>
+                    </p>
+                    <p style="margin-top: 10px;">
+                        <strong>Constants:</strong> <code>pi</code>, <code>e</code>
+                    </p>
+                    <p style="margin-top: 10px;">
+                        <strong>Operators:</strong> <code>x**2</code> (power), <code>x/y</code> (division)
+                    </p>
+                </div>
+                
+                <div class="examples">
+                    <h3 id="examples-title">📌 Try Examples (2D):</h3>
+                    <div class="examples-list" id="examples-2d">
+                        <button class="example-btn" onclick="loadExample('sin(x)')">sin(x)</button>
+                        <button class="example-btn" onclick="loadExample('x**2')">x²</button>
+                        <button class="example-btn" onclick="loadExample('exp(x)')">eˣ</button>
+                        <button class="example-btn" onclick="loadExample('1/x')">1/x</button>
+                        <button class="example-btn" onclick="loadExample('sin(x)*cos(3*x)')">sin(x)cos(3x)</button>
+                        <button class="example-btn" onclick="loadExample('sqrt(abs(x))')">√|x|</button>
+                    </div>
+                    <div class="examples-list" id="examples-3d" style="display:none;">
+                        <button class="example-btn" onclick="loadExample3d('sin(x)*cos(y)')">sin(x)cos(y)</button>
+                        <button class="example-btn" onclick="loadExample3d('x**2 + y**2')">x² + y²</button>
+                        <button class="example-btn" onclick="loadExample3d('sqrt(x**2 + y**2)')">√(x² + y²)</button>
+                        <button class="example-btn" onclick="loadExample3d('sin(sqrt(x**2 + y**2))')">sin(√(x²+y²))</button>
+                        <button class="example-btn" onclick="loadExample3d('exp(-(x**2 + y**2))')">e^(-(x²+y²))</button>
+                        <button class="example-btn" onclick="loadExample3d('sin(x)*sin(y)')">sin(x)sin(y)</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Separator with Sin Wave -->
+            <div class="separator">
+                <canvas id="separatorCanvas"></canvas>
+            </div>
+            
+            <!-- Plot Area -->
+            <div class="plot-container">
+                <h2>Visualization</h2>
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Generating plots...</p>
+                </div>
+                <div class="success-message" id="successMessage">Plot updated!</div>
+                <div class="plots-grid">
+                    <div id="plot1" class="plot-box">
+                        <img class="plot-image" id="img1" src="" alt="Cartesian Plot">
+                        <div style="padding: 20px; color: #999;">Cartesian Plot</div>
+                    </div>
+                    <div id="plot2" class="plot-box">
+                        <img class="plot-image" id="img2" src="" alt="Polar (θ-r) Plot">
+                        <div style="padding: 20px; color: #999;">Polar (θ-r) Plot</div>
+                    </div>
+                    <div id="plot3" class="plot-box">
+                        <img class="plot-image" id="img3" src="" alt="Polar (Circular) Plot">
+                        <div style="padding: 20px; color: #999;">Polar (Circular) Plot</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function toggleMode() {
+            const mode = document.getElementById('mode').value;
+            const expr2d = document.getElementById('expression').value;
+            const expr3d = document.getElementById('expression3d').value;
+            
+            // Sync expressions between modes
+            if (mode === '2d' && !expr2d && expr3d) {
+                document.getElementById('expression').value = expr3d;
+            } else if (mode === '3d' && !expr3d && expr2d) {
+                document.getElementById('expression3d').value = expr2d;
+            }
+            
+            document.getElementById('expr2d').style.display = mode === '2d' ? 'block' : 'none';
+            document.getElementById('expr3d').style.display = mode === '3d' ? 'block' : 'none';
+            document.getElementById('range2d').style.display = mode === '2d' ? 'block' : 'none';
+            document.getElementById('range3d').style.display = mode === '3d' ? 'block' : 'none';
+            document.getElementById('examples-2d').style.display = mode === '2d' ? 'flex' : 'none';
+            document.getElementById('examples-3d').style.display = mode === '3d' ? 'flex' : 'none';
+            document.getElementById('examples-title').textContent = mode === '2d' ? '📌 Try Examples (2D):' : '📌 Try Examples (3D):';
+            document.getElementById('plotImage').classList.remove('show');
+        }
+        
+        function plotFunction() {
+            const mode = document.getElementById('mode').value;
+            let expression, x_min, x_max, y_min, y_max;
+            
+            if (mode === '2d') {
+                expression = document.getElementById('expression').value.trim();
+                x_min = parseFloat(document.getElementById('x_min').value);
+                x_max = parseFloat(document.getElementById('x_max').value);
+                
+                // Validate 2D inputs
+                if (!expression) {
+                    showError('Please enter a function');
+                    return;
+                }
+                
+                if (isNaN(x_min) || isNaN(x_max)) {
+                    showError('Please enter valid X range values');
+                    return;
+                }
+                
+                if (x_min >= x_max) {
+                    showError('X min must be less than X max');
+                    return;
+                }
+                
+                // Use matplotlib plotting endpoint
+                showLoading(true);
+                hideError();
+                hideSuccess();
+                
+                const body = { expression, x_min, x_max, parameters };
+                
+                fetch('/plot', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(body)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    showLoading(false);
+                    if (data.success) {
+                        console.log('Plotting data:', data);
+                        
+                        try {
+                            // Display 3 separate matplotlib images
+                            document.getElementById('img1').src = 'data:image/png;base64,' + data.images[0];
+                            document.getElementById('img1').classList.add('show');
+                            
+                            document.getElementById('img2').src = 'data:image/png;base64,' + data.images[1];
+                            document.getElementById('img2').classList.add('show');
+                            
+                            document.getElementById('img3').src = 'data:image/png;base64,' + data.images[2];
+                            document.getElementById('img3').classList.add('show');
+                        } catch (plotError) {
+                            console.error('Error rendering plots:', plotError);
+                            showError('Error rendering plots: ' + plotError.message);
+                        }
+                        
+                        showSuccess();
+                    } else {
+                        showError(data.error);
+                    }
+                })
+                .catch(error => {
+                    showLoading(false);
+                    showError('Error: ' + error.message);
+                });
+            } else {
+                expression = document.getElementById('expression3d').value.trim();
+                x_min = parseFloat(document.getElementById('x_min_3d').value);
+                x_max = parseFloat(document.getElementById('x_max_3d').value);
+                y_min = parseFloat(document.getElementById('y_min_3d').value);
+                y_max = parseFloat(document.getElementById('y_max_3d').value);
+                
+                // Validate 3D inputs
+                if (!expression) {
+                    showError('Please enter a 3D function');
+                    return;
+                }
+                
+                if (isNaN(x_min) || isNaN(x_max) || isNaN(y_min) || isNaN(y_max)) {
+                    showError('Please enter valid range values');
+                    return;
+                }
+                
+                if (x_min >= x_max || y_min >= y_max) {
+                    showError('Min must be less than Max for both X and Y');
+                    return;
+                }
+                
+                showLoading(true);
+                hideError();
+                hideSuccess();
+                
+                const body = { expression, x_min, x_max, y_min, y_max, parameters };
+                
+                fetch('/plot3d', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(body)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    showLoading(false);
+                    if (data.success) {
+                        // Display 3 separate Plotly 3D plots
+                        Plotly.newPlot('plot1', JSON.parse(data.images[0]).data, JSON.parse(data.images[0]).layout, {responsive: true});
+                        
+                        Plotly.newPlot('plot2', JSON.parse(data.images[1]).data, JSON.parse(data.images[1]).layout, {responsive: true});
+                        
+                        Plotly.newPlot('plot3', JSON.parse(data.images[2]).data, JSON.parse(data.images[2]).layout, {responsive: true});
+                        
+                        showSuccess();
+                    } else {
+                        showError(data.error);
+                    }
+                })
+                .catch(error => {
+                    showLoading(false);
+                    showError('Error: ' + error.message);
+                });
+            }
+        }
+        
+        function resetForm() {
+            const mode = document.getElementById('mode').value;
+            if (mode === '2d') {
+                document.getElementById('expression').value = '';
+                document.getElementById('x_min').value = '-5';
+                document.getElementById('x_max').value = '5';
+            } else {
+                document.getElementById('expression3d').value = '';
+                document.getElementById('x_min_3d').value = '-3';
+                document.getElementById('x_max_3d').value = '3';
+                document.getElementById('y_min_3d').value = '-3';
+                document.getElementById('y_max_3d').value = '3';
+            }
+            document.getElementById('plotImage').classList.remove('show');
+            hideError();
+            hideSuccess();
+        }
+        
+        function loadExample(example) {
+            document.getElementById('expression').value = example;
+            plotFunction();
+        }
+        
+        function loadExample3d(example) {
+            document.getElementById('expression3d').value = example;
+            plotFunction();
+        }
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('show');
+        }
+        
+        function hideError() {
+            document.getElementById('errorMessage').classList.remove('show');
+        }
+        
+        function showSuccess() {
+            document.getElementById('successMessage').classList.add('show');
+            setTimeout(() => {
+                document.getElementById('successMessage').classList.remove('show');
+            }, 3000);
+        }
+        
+        function hideSuccess() {
+            document.getElementById('successMessage').classList.remove('show');
+        }
+        
+        function showLoading(show) {
+            document.getElementById('loading').classList.toggle('show', show);
+        }
+        
+        // Real-time plotting with debouncing
+        let debounceTimer;
+        const DEBOUNCE_DELAY = 500; // milliseconds
+        
+        function debounceReplot() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                plotFunction();
+            }, DEBOUNCE_DELAY);
+        }
+        
+        // Parameter management
+        let parameterCount = 0;
+        const parameters = {};
+        const parameterIds = {}; // Track param IDs to their names
+        
+        function addParameter() {
+            parameterCount++;
+            const paramId = 'param_' + parameterCount;
+            const paramsList = document.getElementById('params-list');
+            
+            // Auto-generate unique default names: a, b, c, d, ...
+            const defaultName = String.fromCharCode(97 + (parameterCount - 1) % 26);
+            
+            const paramDiv = document.createElement('div');
+            paramDiv.className = 'parameter-item';
+            paramDiv.id = paramId;
+            paramDiv.innerHTML = `
+                <input type="text" placeholder="Name" class="param-name" value="${defaultName}">
+                <div class="parameter-slider-container">
+                    <div class="parameter-slider-wrapper">
+                        <input type="number" class="param-min" value="-10">
+                        <input type="range" min="-10" max="10" step="0.1" value="1" class="param-slider" oninput="updateParameter('${paramId}')">
+                        <input type="number" class="param-max" value="10">
+                    </div>
+                    <div class="parameter-min-max"><span class="param-min-text">-10</span> to <span class="param-max-text">10</span></div>
+                </div>
+                <div class="parameter-value"><span class="param-value">1.00</span></div>
+                <button class="btn-remove-param" onclick="removeParameter('${paramId}')">✕</button>
+            `;
+            
+            paramsList.appendChild(paramDiv);
+            
+            // Track this parameter ID with its initial name
+            parameterIds[paramId] = defaultName;
+            
+            // Update min/max of slider if they change
+            const minInput = paramDiv.querySelector('.param-min');
+            const maxInput = paramDiv.querySelector('.param-max');
+            minInput.addEventListener('change', () => updateSliderRange(paramId));
+            maxInput.addEventListener('change', () => updateSliderRange(paramId));
+            
+            // Listen for name changes
+            const nameInput = paramDiv.querySelector('.param-name');
+            nameInput.addEventListener('change', () => updateParameter(paramId));
+            nameInput.addEventListener('input', () => updateParameter(paramId));
+            
+            updateParameter(paramId);
+        }
+        
+        function updateSliderRange(paramId) {
+            const paramDiv = document.getElementById(paramId);
+            const slider = paramDiv.querySelector('.param-slider');
+            const minInput = paramDiv.querySelector('.param-min');
+            const maxInput = paramDiv.querySelector('.param-max');
+            const minText = paramDiv.querySelector('.param-min-text');
+            const maxText = paramDiv.querySelector('.param-max-text');
+            
+            const minVal = parseFloat(minInput.value) || 0;
+            const maxVal = parseFloat(maxInput.value) || 10;
+            
+            if (minVal < maxVal) {
+                // Set as strings for proper HTML range element behavior
+                slider.min = String(minVal);
+                slider.max = String(maxVal);
+                
+                // Ensure current value stays within bounds
+                let currentValue = parseFloat(slider.value);
+                if (isNaN(currentValue)) currentValue = minVal;
+                currentValue = Math.max(minVal, Math.min(maxVal, currentValue));
+                slider.value = String(currentValue);
+                
+                minText.textContent = minVal.toFixed(1);
+                maxText.textContent = maxVal.toFixed(1);
+                // Don't call updateParameter here - just update bounds
+            }
+        }
+        
+        function updateParameter(paramId) {
+            const paramDiv = document.getElementById(paramId);
+            const nameInput = paramDiv.querySelector('.param-name');
+            const slider = paramDiv.querySelector('.param-slider');
+            const valueDisplay = paramDiv.querySelector('.param-value');
+            
+            const paramName = nameInput.value.trim();
+            const paramValue = parseFloat(slider.value);
+            
+            if (paramName && !isNaN(paramValue)) {
+                // Remove old name if it was different
+                if (parameterIds[paramId] && parameterIds[paramId] !== paramName) {
+                    delete parameters[parameterIds[paramId]];
+                }
+                
+                // Update with new name
+                parameterIds[paramId] = paramName;
+                parameters[paramName] = paramValue;
+                valueDisplay.textContent = paramValue.toFixed(2);
+                debounceReplot();
+            }
+        }
+        
+        function removeParameter(paramId) {
+            const paramDiv = document.getElementById(paramId);
+            if (paramDiv) {
+                const paramName = parameterIds[paramId];
+                if (paramName) {
+                    delete parameters[paramName];
+                }
+                delete parameterIds[paramId];
+                paramDiv.remove();
+                debounceReplot();
+            }
+        }
+        
+        // Allow Enter key to plot
+        document.getElementById('expression').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                plotFunction();
+            }
+        });
+        
+        document.getElementById('expression3d').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                plotFunction();
+            }
+        });
+        
+        // Draw separator with sin wave
+        function drawSeparator() {
+            const canvas = document.getElementById('separatorCanvas');
+            if (!canvas) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = 5;
+            canvas.height = rect.height;
+            
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            const amplitude = height / 3;
+            const frequency = 0.015;
+            const centerY = height / 2;
+            
+            // Draw gradient background
+            const gradient = ctx.createLinearGradient(0, 0, 0, height);
+            gradient.addColorStop(0, 'rgba(102, 126, 234, 0.1)');
+            gradient.addColorStop(0.5, 'rgba(102, 126, 234, 0.3)');
+            gradient.addColorStop(1, 'rgba(102, 126, 234, 0.1)');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, width, height);
+            
+            // Draw sin wave
+            ctx.strokeStyle = '#667eea';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            
+            for (let y = 0; y < height; y++) {
+                const x = width / 2 + Math.sin(y * frequency) * 2;
+                if (y === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+            ctx.stroke();
+            
+            // Draw vertical center line
+            ctx.strokeStyle = 'rgba(102, 126, 234, 0.5)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(width / 2, 0);
+            ctx.lineTo(width / 2, height);
+            ctx.stroke();
+        }
+        
+        window.addEventListener('load', function() {
+            drawSeparator();
+            // Redraw on resize
+            window.addEventListener('resize', drawSeparator);
+        });
+        
+        // Load default example on page load
+        window.addEventListener('load', function() {
+            loadExample('sin(x)');
+        });
+    </script>
+</body>
+</html>
