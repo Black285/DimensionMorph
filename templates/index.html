@@ -241,6 +241,8 @@
             width: 100%;
             display: block;
             overflow: hidden;
+            min-height: 400px;
+            height: 100%;
         }
         
         .plot-image {
@@ -380,42 +382,66 @@
         }
         
         .btn-add-param {
-            background: #667eea;
+            background: #0066cc;
             color: white;
-            padding: 8px 15px;
+            padding: 8px 16px;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             font-size: 0.9em;
             transition: all 0.2s ease;
+            font-weight: 600;
         }
         
         .btn-add-param:hover {
-            background: #764ba2;
+            background: #0052a3;
+            box-shadow: 0 2px 8px rgba(0, 102, 204, 0.3);
         }
         
         .parameter-item {
             background: white;
-            padding: 15px;
+            padding: 16px;
+            padding-top: 24px;
             border-radius: 8px;
-            margin-bottom: 15px;
-            border: 1px solid #ddd;
+            margin-bottom: 12px;
+            border: 1px solid #e0e0e0;
             display: flex;
-            gap: 12px;
-            align-items: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            flex-direction: column;
+            gap: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
             position: relative;
+            transition: box-shadow 0.2s ease;
+        }
+
+        .parameter-item:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .parameter-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         
         .parameter-item input[type="text"] {
-            padding: 8px;
-            border: 1px solid #ddd;
+            padding: 8px 12px;
+            border: 1px solid #e0e0e0;
             border-radius: 4px;
             font-family: 'Courier New', monospace;
-            font-weight: bold;
-            background: #f9f9f9;
-            width: 70px;
+            font-weight: 600;
+            background: #fafafa;
+            width: 60px;
             flex-shrink: 0;
+            font-size: 0.9em;
+            color: #333;
+            transition: all 0.2s ease;
+        }
+
+        .parameter-item input[type="text"]:focus {
+            outline: none;
+            border-color: #0066cc;
+            background: white;
+            box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.1);
         }
         
         .parameter-slider-container {
@@ -428,19 +454,62 @@
         
         .parameter-slider-wrapper {
             display: flex;
-            gap: 4px;
+            gap: 10px;
             align-items: center;
+        }
+
+        .parameter-slider-wrapper span {
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            color: #666;
+            min-width: 28px;
+            text-align: center;
+            user-select: none;
+            transition: color 0.2s ease;
+        }
+
+        .parameter-slider-wrapper .param-min-text,
+        .parameter-slider-wrapper .param-max-text {
+            cursor: pointer;
+            color: #0066cc;
+        }
+
+        .parameter-slider-wrapper .param-min-text:hover,
+        .parameter-slider-wrapper .param-max-text:hover {
+            text-decoration: underline;
+            color: #0052a3;
+        }
+
+        .parameter-range-trigger {
+            padding: 6px 0;
+            font-size: 0.85em;
+            transition: color 0.2s ease;
+        }
+
+        .parameter-range-trigger:hover {
+            color: #0052a3;
+            text-decoration: underline;
         }
         
         .parameter-slider-wrapper input[type="number"] {
-            width: auto;
+            width: 50px;
             padding: 6px 8px;
-            border: 1px solid #ddd;
+            border: 1px solid #e0e0e0;
             border-radius: 4px;
             text-align: center;
-            font-size: 0.8em;
+            font-size: 0.85em;
+            font-family: 'Courier New', monospace;
             flex-shrink: 0;
-            min-width: 50px;
+            background: #fafafa;
+            color: #666;
+            transition: all 0.2s ease;
+        }
+
+        .parameter-slider-wrapper input[type="number"]:focus {
+            outline: none;
+            border-color: #0066cc;
+            background: white;
+            box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.1);
         }
         
         /* Remove spinner arrows from number inputs */
@@ -451,98 +520,253 @@
         }
         
         .parameter-slider-wrapper input[type="number"][type="number"] {
-            appearance: calc();
             -moz-appearance: textfield;
+            appearance: textfield;
         }
         
         .parameter-item input[type="range"] {
             flex: 1;
-            height: 8px;
+            height: 2px;
             cursor: pointer;
             -webkit-appearance: none;
             appearance: none;
-            background: linear-gradient(to right, #ffffff 0%, #ffffff 100%);
-            border-radius: 5px;
+            background: #e8e8e8;
+            border-radius: 1px;
             outline: none;
             min-width: 100px;
+            transition: background 0.2s ease;
+            padding: 6px 0;
+        }
+
+        .parameter-item input[type="range"]:hover {
+            background: #d0d0d0;
         }
         
         .parameter-item input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 2px;
-            height: 16px;
-            border-radius: 1px;
-            background: #667eea;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #0066cc;
             cursor: pointer;
-            box-shadow: 0 1px 4px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 2px 4px rgba(0, 102, 204, 0.4);
             border: none;
             transition: all 0.2s ease;
+            margin-top: -5px;
         }
         
         .parameter-item input[type="range"]::-webkit-slider-thumb:hover {
-            height: 20px;
-            background: #764ba2;
-            box-shadow: 0 2px 6px rgba(102, 126, 234, 0.6);
+            width: 14px;
+            height: 14px;
+            box-shadow: 0 2px 8px rgba(0, 102, 204, 0.5);
+            background: #0052a3;
+        }
+
+        .parameter-item input[type="range"]::-webkit-slider-thumb:active {
+            width: 16px;
+            height: 16px;
+            box-shadow: 0 2px 10px rgba(0, 102, 204, 0.6);
         }
         
         .parameter-item input[type="range"]::-moz-range-thumb {
-            width: 2px;
-            height: 16px;
-            border-radius: 1px;
-            background: #667eea;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #0066cc;
             cursor: pointer;
-            box-shadow: 0 1px 4px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 2px 4px rgba(0, 102, 204, 0.4);
             border: none;
             transition: all 0.2s ease;
         }
         
         .parameter-item input[type="range"]::-moz-range-thumb:hover {
-            height: 20px;
-            background: #764ba2;
-            box-shadow: 0 2px 6px rgba(102, 126, 234, 0.6);
+            width: 14px;
+            height: 14px;
+            box-shadow: 0 2px 8px rgba(0, 102, 204, 0.5);
+            background: #0052a3;
+        }
+
+        .parameter-item input[type="range"]::-moz-range-track {
+            background: transparent;
+            border: none;
+        }
+
+        .parameter-item input[type="range"]::-moz-range-progress {
+            background: transparent;
         }
         
         .parameter-min-max {
             text-align: center;
-            font-size: 0.7em;
+            font-size: 0.75em;
             color: #999;
             font-family: 'Courier New', monospace;
-            letter-spacing: -1px;
+            letter-spacing: -0.5px;
         }
         
         .parameter-value {
-            text-align: center;
-            font-weight: bold;
-            color: #667eea;
+            font-weight: 600;
+            color: #0066cc;
             font-family: 'Courier New', monospace;
-            width: 50px;
             flex-shrink: 0;
+            font-size: 0.95em;
+            margin-left: auto;
         }
         
         .btn-remove-param {
             position: absolute;
             top: 8px;
             right: 8px;
-            background: #ff6b6b;
-            color: white;
+            background: none;
+            color: #ccc;
             border: none;
-            padding: 2px 6px;
+            padding: 2px 4px;
             border-radius: 3px;
             cursor: pointer;
-            font-size: 0.9em;
-            width: auto;
-            min-width: 24px;
-            height: 24px;
+            font-size: 1.2em;
+            width: 20px;
+            height: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
             line-height: 1;
-            font-weight: bold;
+            font-weight: 400;
+            transition: all 0.2s ease;
         }
         
         .btn-remove-param:hover {
-            background: #ff5252;
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        /* Modal for parameter range settings */
+        .parameter-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.3);
+            animation: fadeIn 0.2s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .parameter-modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .parameter-modal-content {
+            background: white;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+            width: 90%;
+            max-width: 400px;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .parameter-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .parameter-modal-header h3 {
+            font-size: 1.2em;
+            color: #333;
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .parameter-modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #ccc;
+            transition: color 0.2s ease;
+        }
+
+        .parameter-modal-close:hover {
+            color: #999;
+        }
+
+        .modal-form-group {
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .modal-form-group label {
+            min-width: 60px;
+            font-weight: 600;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .modal-form-group input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .modal-form-group input:focus {
+            outline: none;
+            border-color: #0066cc;
+            box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.1);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 20px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9em;
+        }
+
+        .modal-btn-save {
+            background: #0066cc;
+            color: white;
+        }
+
+        .modal-btn-save:hover {
+            background: #0052a3;
+        }
+
+        .modal-btn-cancel {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .modal-btn-cancel:hover {
+            background: #e0e0e0;
         }
         
         @media (max-width: 768px) {
@@ -576,10 +800,10 @@
 </head>
 <body>
     <div class="container">
-        <div class="header">
+        <!-- <div class="header">
             <h1>🔄 Cartesian to Polar Transformer</h1>
             <p>Visualize how any function transforms from Cartesian to Polar coordinates</p>
-        </div>
+        </div> -->
         
         <div class="main-content">
             <!-- Control Panel -->
@@ -606,27 +830,27 @@
                 
                 <div class="form-group">
                     <label>Parameters:</label>
-                    <div id="parameters-container" style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin-top: 10px;">
+                    <div id="parameters-container" style="background: #fafafa; padding: 12px; border-radius: 5px; margin-top: 10px; border: 1px solid #e8e8e8;">
                         <button class="btn-add-param" onclick="addParameter()">+ Add Parameter</button>
-                        <div id="params-list" style="margin-top: 10px;"></div>
+                        <div id="params-list" style="margin-top: 12px;"></div>
                     </div>
                 </div>
                 
                 <div class="form-group" id="range2d">
                     <label>X Range:</label>
                     <div class="range-inputs">
-                        <input type="number" id="x_min" value="-5" placeholder="Min X" onchange="debounceReplot()">
-                        <input type="number" id="x_max" value="5" placeholder="Max X" onchange="debounceReplot()">
+                        <input type="text" id="x_min" value="-5" placeholder="Min X (e.g., -pi)" onchange="debounceReplot()">
+                        <input type="text" id="x_max" value="5" placeholder="Max X (e.g., pi)" onchange="debounceReplot()">
                     </div>
                 </div>
                 
                 <div class="form-group" id="range3d" style="display:none;">
                     <label>Range:</label>
                     <div class="range-inputs" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
-                        <input type="number" id="x_min_3d" value="-3" placeholder="Min X" onchange="debounceReplot()">
-                        <input type="number" id="x_max_3d" value="3" placeholder="Max X" onchange="debounceReplot()">
-                        <input type="number" id="y_min_3d" value="-3" placeholder="Min Y" onchange="debounceReplot()">
-                        <input type="number" id="y_max_3d" value="3" placeholder="Max Y" onchange="debounceReplot()">
+                        <input type="text" id="x_min_3d" value="-3" placeholder="Min X" onchange="debounceReplot()">
+                        <input type="text" id="x_max_3d" value="3" placeholder="Max X" onchange="debounceReplot()">
+                        <input type="text" id="y_min_3d" value="-3" placeholder="Min Y" onchange="debounceReplot()">
+                        <input type="text" id="y_max_3d" value="3" placeholder="Max Y" onchange="debounceReplot()">
                     </div>
                 </div>
                 
@@ -653,6 +877,10 @@
                     </p>
                     <p>
                         <strong>Min/Max:</strong> <code>min</code>, <code>max</code>
+                    </p>
+                    <p style="margin-top: 10px;">
+                        <strong>Series:</strong> <code>sum(...)</code> (add all terms), <code>prod(...)</code> (multiply all terms)
+                        <br/><em>Example:</em> <code>sum(sin(i*x) for i in range(5))</code> or <code>prod(1 + i*x for i in range(1, 5))</code>
                     </p>
                     <p style="margin-top: 10px;">
                         <strong>Constants:</strong> <code>pi</code>, <code>e</code>
@@ -715,6 +943,13 @@
     </div>
     
     <script>
+        // ===== CONFIGURATION: Toggle rendering modes =====
+        const RENDER_CONFIG = {
+            '2d': 'plotly',    // 'images' for matplotlib PNG, 'plotly' for interactive plots
+            '3d': 'plotly'     // 'images' for matplotlib PNG, 'plotly' for interactive plots
+        };
+        // ===== END CONFIGURATION =====
+        
         function toggleMode() {
             const mode = document.getElementById('mode').value;
             const expr2d = document.getElementById('expression').value;
@@ -734,7 +969,49 @@
             document.getElementById('examples-2d').style.display = mode === '2d' ? 'flex' : 'none';
             document.getElementById('examples-3d').style.display = mode === '3d' ? 'flex' : 'none';
             document.getElementById('examples-title').textContent = mode === '2d' ? '📌 Try Examples (2D):' : '📌 Try Examples (3D):';
-            document.getElementById('plotImage').classList.remove('show');
+            
+            // Handle plot container structure based on mode and render config
+            const plot1 = document.getElementById('plot1');
+            const plot2 = document.getElementById('plot2');
+            const plot3 = document.getElementById('plot3');
+            
+            if (mode === '2d') {
+                if (RENDER_CONFIG['2d'] === 'images') {
+                    // Reconstruct 2D plot structure with img elements
+                    plot1.innerHTML = '<img class="plot-image" id="img1" src="" alt="Cartesian Plot"><div style="padding: 20px; color: #999;">Cartesian Plot</div>';
+                    plot2.innerHTML = '<img class="plot-image" id="img2" src="" alt="Polar (θ-r) Plot"><div style="padding: 20px; color: #999;">Polar (θ-r) Plot</div>';
+                    plot3.innerHTML = '<img class="plot-image" id="img3" src="" alt="Polar (Circular) Plot"><div style="padding: 20px; color: #999;">Polar (Circular) Plot</div>';
+                } else {
+                    // Prepare blank containers for Plotly 2D rendering
+                    plot1.innerHTML = '';
+                    plot2.innerHTML = '';
+                    plot3.innerHTML = '';
+                    plot1.style.minHeight = plot2.style.minHeight = plot3.style.minHeight = '400px';
+                }
+            } else if (mode === '3d') {
+                // For 3D, check render format from config
+                if (RENDER_CONFIG['3d'] === 'images') {
+                    // Reconstruct img elements for matplotlib 3D rendering
+                    plot1.innerHTML = '<img class="plot-image" id="img1" src="" alt="Cartesian Plot"><div style="padding: 20px; color: #999;">Cartesian Plot</div>';
+                    plot2.innerHTML = '<img class="plot-image" id="img2" src="" alt="Polar (θ-r) Plot"><div style="padding: 20px; color: #999;">Polar (θ-r) Plot</div>';
+                    plot3.innerHTML = '<img class="plot-image" id="img3" src="" alt="Polar (Circular) Plot"><div style="padding: 20px; color: #999;">Polar (Circular) Plot</div>';
+                } else {
+                    // Clear divs completely for Plotly 3D rendering
+                    [plot1, plot2, plot3].forEach(div => {
+                        try { Plotly.purge(div); } catch (e) {}
+                        div.innerHTML = '';
+                        div.style.minHeight = '400px';
+                        div.style.display = 'block';
+                        div.style.position = 'relative';
+                        div.style.width = '100%';
+                    });
+                }
+            }
+            
+            const plotImage = document.getElementById('plotImage');
+            if (plotImage) {
+                plotImage.classList.remove('show');
+            }
         }
         
         function plotFunction() {
@@ -743,8 +1020,8 @@
             
             if (mode === '2d') {
                 expression = document.getElementById('expression').value.trim();
-                x_min = parseFloat(document.getElementById('x_min').value);
-                x_max = parseFloat(document.getElementById('x_max').value);
+                x_min = document.getElementById('x_min').value;
+                x_max = document.getElementById('x_max').value;
                 
                 // Validate 2D inputs
                 if (!expression) {
@@ -752,64 +1029,128 @@
                     return;
                 }
                 
-                if (isNaN(x_min) || isNaN(x_max)) {
-                    showError('Please enter valid X range values');
-                    return;
-                }
-                
-                if (x_min >= x_max) {
-                    showError('X min must be less than X max');
+                if (!x_min || !x_max) {
+                    showError('Please enter X range values');
                     return;
                 }
                 
                 // Use matplotlib plotting endpoint
+                    console.log('2D Mode - Rendering config:', RENDER_CONFIG['2d']);
                 showLoading(true);
                 hideError();
                 hideSuccess();
-                
-                const body = { expression, x_min, x_max, parameters };
-                
-                fetch('/plot', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(body)
-                })
-                .then(response => response.json())
-                .then(data => {
-                    showLoading(false);
-                    if (data.success) {
-                        console.log('Plotting data:', data);
-                        
-                        try {
-                            // Display 3 separate matplotlib images
-                            document.getElementById('img1').src = 'data:image/png;base64,' + data.images[0];
-                            document.getElementById('img1').classList.add('show');
-                            
-                            document.getElementById('img2').src = 'data:image/png;base64,' + data.images[1];
-                            document.getElementById('img2').classList.add('show');
-                            
-                            document.getElementById('img3').src = 'data:image/png;base64,' + data.images[2];
-                            document.getElementById('img3').classList.add('show');
-                        } catch (plotError) {
-                            console.error('Error rendering plots:', plotError);
-                            showError('Error rendering plots: ' + plotError.message);
+
+                if (RENDER_CONFIG['2d'] === 'plotly') {
+                    // Use the /plot-data endpoint and render with Plotly
+                    const body = { expression, x_min, x_max, parameters };
+                    fetch('/plot-data', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(body)
+                    })
+                    .then(resp => resp.json())
+                    .then(data => {
+                        showLoading(false);
+                        if (data.success) {
+                            try {
+                                // Get container elements
+                                const p1 = document.getElementById('plot1');
+                                const p2 = document.getElementById('plot2');
+                                const p3 = document.getElementById('plot3');
+                                
+                                // Purge existing plots
+                                Plotly.purge(p1);
+                                Plotly.purge(p2);
+                                Plotly.purge(p3);
+                                p1.innerHTML = '';
+                                p2.innerHTML = '';
+                                p3.innerHTML = '';
+                                
+                                // Get dimensions from containers
+                                const width1 = p1.offsetWidth;
+                                const height1 = p1.offsetHeight || 400;
+                                const width2 = p2.offsetWidth;
+                                const height2 = p2.offsetHeight || 400;
+                                const width3 = p3.offsetWidth;
+                                const height3 = p3.offsetHeight || 400;
+                                
+                                // Render plots with proper sizing
+                                const layout1 = Object.assign({}, data.layout1, {
+                                    width: Math.max(width1 - 20, 100),
+                                    height: Math.max(height1 - 20, 100),
+                                    autosize: true
+                                });
+                                const layout2 = Object.assign({}, data.layout2, {
+                                    width: Math.max(width2 - 20, 100),
+                                    height: Math.max(height2 - 20, 100),
+                                    autosize: true
+                                });
+                                const layout3 = Object.assign({}, data.layout3, {
+                                    width: Math.max(width3 - 20, 100),
+                                    height: Math.max(height3 - 20, 100),
+                                    autosize: true
+                                });
+                                
+                                Plotly.newPlot(p1, data.plot1_traces, layout1, {responsive: true});
+                                Plotly.newPlot(p2, data.plot2_traces, layout2, {responsive: true});
+                                Plotly.newPlot(p3, data.plot3_traces, layout3, {responsive: true});
+                                
+                                showSuccess();
+                            } catch (plotError) {
+                                console.error('Error rendering 2D Plotly plots:', plotError);
+                                showError('Error rendering plots: ' + plotError.message);
+                            }
+                        } else {
+                            showError(data.error);
                         }
-                        
-                        showSuccess();
-                    } else {
-                        showError(data.error);
-                    }
-                })
-                .catch(error => {
-                    showLoading(false);
-                    showError('Error: ' + error.message);
-                });
+                    })
+                    .catch(err => {
+                        showLoading(false);
+                        console.error('Fetch error (2D Plotly):', err);
+                        showError('Error: ' + err.message);
+                    });
+                } else {
+                    // default matplotlib image workflow
+                    const body = { expression, x_min, x_max, parameters };
+                    fetch('/plot', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(body)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        showLoading(false);
+                        if (data.success) {
+                            try {
+                                // Display 3 separate matplotlib images
+                                document.getElementById('img1').src = 'data:image/png;base64,' + data.images[0];
+                                document.getElementById('img1').classList.add('show');
+                                
+                                document.getElementById('img2').src = 'data:image/png;base64,' + data.images[1];
+                                document.getElementById('img2').classList.add('show');
+                                
+                                document.getElementById('img3').src = 'data:image/png;base64,' + data.images[2];
+                                document.getElementById('img3').classList.add('show');
+                            } catch (plotError) {
+                                console.error('Error rendering plots:', plotError);
+                                showError('Error rendering plots: ' + plotError.message);
+                            }
+                            showSuccess();
+                        } else {
+                            showError(data.error);
+                        }
+                    })
+                    .catch(error => {
+                        showLoading(false);
+                        showError('Error: ' + error.message);
+                    });
+                }
             } else {
                 expression = document.getElementById('expression3d').value.trim();
-                x_min = parseFloat(document.getElementById('x_min_3d').value);
-                x_max = parseFloat(document.getElementById('x_max_3d').value);
-                y_min = parseFloat(document.getElementById('y_min_3d').value);
-                y_max = parseFloat(document.getElementById('y_max_3d').value);
+                x_min = document.getElementById('x_min_3d').value;
+                x_max = document.getElementById('x_max_3d').value;
+                y_min = document.getElementById('y_min_3d').value;
+                y_max = document.getElementById('y_max_3d').value;
                 
                 // Validate 3D inputs
                 if (!expression) {
@@ -817,13 +1158,8 @@
                     return;
                 }
                 
-                if (isNaN(x_min) || isNaN(x_max) || isNaN(y_min) || isNaN(y_max)) {
-                    showError('Please enter valid range values');
-                    return;
-                }
-                
-                if (x_min >= x_max || y_min >= y_max) {
-                    showError('Min must be less than Max for both X and Y');
+                if (!x_min || !x_max || !y_min || !y_max) {
+                    showError('Please enter all range values');
                     return;
                 }
                 
@@ -831,7 +1167,9 @@
                 hideError();
                 hideSuccess();
                 
-                const body = { expression, x_min, x_max, y_min, y_max, parameters };
+                console.log('3D Mode - Rendering config:', RENDER_CONFIG['3d']);
+                
+                const body = { expression, x_min, x_max, y_min, y_max, parameters, render_format: RENDER_CONFIG['3d'] };
                 
                 fetch('/plot3d', {
                     method: 'POST',
@@ -841,26 +1179,145 @@
                 .then(response => response.json())
                 .then(data => {
                     showLoading(false);
+                    console.log('3D Plot Response:', data); // Debug logging
+                    console.log('RENDER_CONFIG["3d"]:', RENDER_CONFIG['3d']);
                     if (data.success) {
-                        // Display 3 separate Plotly 3D plots
-                        Plotly.newPlot('plot1', JSON.parse(data.images[0]).data, JSON.parse(data.images[0]).layout, {responsive: true});
-                        
-                        Plotly.newPlot('plot2', JSON.parse(data.images[1]).data, JSON.parse(data.images[1]).layout, {responsive: true});
-                        
-                        Plotly.newPlot('plot3', JSON.parse(data.images[2]).data, JSON.parse(data.images[2]).layout, {responsive: true});
-                        
-                        showSuccess();
+                        // Check render format
+                        if (RENDER_CONFIG['3d'] === 'images') {
+                            console.log('Using IMAGE rendering for 3D');
+                            // Display 3 separate matplotlib images
+                            try {
+                                document.getElementById('img1').src = 'data:image/png;base64,' + data.images[0];
+                                document.getElementById('img1').classList.add('show');
+                                
+                                document.getElementById('img2').src = 'data:image/png;base64,' + data.images[1];
+                                document.getElementById('img2').classList.add('show');
+                                
+                                document.getElementById('img3').src = 'data:image/png;base64,' + data.images[2];
+                                document.getElementById('img3').classList.add('show');
+                                
+                                showSuccess();
+                            } catch (imgError) {
+                                console.error('Error rendering 3D images:', imgError);
+                                showError('Error rendering plots: ' + imgError.message);
+                            }
+                        } else if (RENDER_CONFIG['3d'] === 'plotly') {
+                            console.log('Using PLOTLY rendering for 3D');
+                            // Display 3 separate Plotly 3D plots
+                            try {
+                                const fig1Data = data.images[0];
+                                const fig2Data = data.images[1];
+                                const fig3Data = data.images[2];
+
+                                console.log('Raw fig1Data length:', fig1Data.length);
+
+                                const fig1 = JSON.parse(fig1Data);
+                                const fig2 = JSON.parse(fig2Data);
+                                const fig3 = JSON.parse(fig3Data);
+
+                                console.log('Parsed figures:');
+                                console.log('Fig 1 - data count:', fig1.data ? fig1.data.length : 0, 'type:', fig1.data && fig1.data[0] ? fig1.data[0].type : 'none');
+                                if (fig1.data && fig1.data[0] && fig1.data[0].x) {
+                                    console.log('Fig 1 data[0].x length:', fig1.data[0].x.length, 'first value:', fig1.data[0].x[0]);
+                                }
+
+                                // Get container elements
+                                const plot1Div = document.getElementById('plot1');
+                                const plot2Div = document.getElementById('plot2');
+                                const plot3Div = document.getElementById('plot3');
+
+                                // Clear existing plots
+                                [plot1Div, plot2Div, plot3Div].forEach(div => {
+                                    try { 
+                                        Plotly.purge(div); 
+                                    } catch (e) {
+                                        console.log('Purge note:', e.message);
+                                    }
+                                });
+
+                                // Render function with better error handling
+                                function renderPlotly(div, fig) {
+                                    return new Promise((resolve, reject) => {
+                                        setTimeout(() => {
+                                            try {
+                                                console.log('Rendering', div.id);
+                                                
+                                                // Validate data before rendering
+                                                if (!fig.data || fig.data.length === 0) {
+                                                    throw new Error('No data in figure');
+                                                }
+                                                
+                                                console.log('Calling Plotly.newPlot with:', {
+                                                    div_id: div.id,
+                                                    data_count: fig.data.length,
+                                                    data_type: fig.data[0].type,
+                                                    has_layout: !!fig.layout
+                                                });
+                                                
+                                                Plotly.newPlot(div, fig.data, fig.layout, {
+                                                    responsive: true, 
+                                                    displayModeBar: true,
+                                                    displaylogo: false,
+                                                    modeBarButtonsToRemove: ['lasso2d', 'select2d']
+                                                })
+                                                .then(() => {
+                                                    console.log('Plotly.newPlot complete for', div.id);
+                                                    setTimeout(() => {
+                                                        Plotly.Plots.resize(div);
+                                                        console.log('Resize complete for', div.id);
+                                                        resolve();
+                                                    }, 100);
+                                                })
+                                                .catch(e => {
+                                                    console.error('Plotly error for', div.id, ':', e);
+                                                    reject(e);
+                                                });
+                                            } catch (err) {
+                                                console.error('Error in renderPlotly for', div.id, ':', err);
+                                                reject(err);
+                                            }
+                                        }, 50);
+                                    });
+                                }
+
+                                console.log('Starting render sequence...');
+                                renderPlotly(plot1Div, fig1)
+                                    .then(() => {
+                                        console.log('Plot 1 done');
+                                        return renderPlotly(plot2Div, fig2);
+                                    })
+                                    .then(() => {
+                                        console.log('Plot 2 done');
+                                        return renderPlotly(plot3Div, fig3);
+                                    })
+                                    .then(() => {
+                                        console.log('All 3D plots rendered!');
+                                        showSuccess();
+                                    })
+                                    .catch(err => {
+                                        console.error('Error in render sequence:', err);
+                                        showError('Error rendering 3D plots: ' + err.message);
+                                    });
+                            } catch (parseError) {
+                                showLoading(false);
+                                console.error('Parse error:', parseError);
+                                showError('Error rendering plots: ' + parseError.message);
+                            }
+                        } else {
+                            console.error('Unknown render format:', RENDER_CONFIG['3d']);
+                            showError('Unknown 3D render format: ' + RENDER_CONFIG['3d']);
+                        }
                     } else {
                         showError(data.error);
                     }
                 })
                 .catch(error => {
                     showLoading(false);
+                    console.error('Fetch error:', error);
                     showError('Error: ' + error.message);
                 });
             }
         }
-        
         function resetForm() {
             const mode = document.getElementById('mode').value;
             if (mode === '2d') {
@@ -942,17 +1399,22 @@
             paramDiv.className = 'parameter-item';
             paramDiv.id = paramId;
             paramDiv.innerHTML = `
-                <input type="text" placeholder="Name" class="param-name" value="${defaultName}">
+                <div class="parameter-header">
+                    <input type="text" placeholder="Name" class="param-name" value="${defaultName}" style="width: 40px;">
+                    <span style="color: #999; font-family: monospace; margin: 0 4px;">=</span>
+                    <span class="parameter-value"><span class="param-value">1.00</span></span>
+                    <button class="btn-remove-param" onclick="removeParameter('${paramId}')">✕</button>
+                </div>
                 <div class="parameter-slider-container">
                     <div class="parameter-slider-wrapper">
-                        <input type="number" class="param-min" value="-10">
+                        <span class="param-min-text" onclick="openParameterModal('${paramId}')" style="cursor: pointer;">-10</span>
                         <input type="range" min="-10" max="10" step="0.1" value="1" class="param-slider" oninput="updateParameter('${paramId}')">
-                        <input type="number" class="param-max" value="10">
+                        <span class="param-max-text" onclick="openParameterModal('${paramId}')" style="cursor: pointer;">10</span>
                     </div>
-                    <div class="parameter-min-max"><span class="param-min-text">-10</span> to <span class="param-max-text">10</span></div>
                 </div>
-                <div class="parameter-value"><span class="param-value">1.00</span></div>
-                <button class="btn-remove-param" onclick="removeParameter('${paramId}')">✕</button>
+                <input type="hidden" class="param-min" value="-10">
+                <input type="hidden" class="param-max" value="10">
+                <input type="hidden" class="param-step" value="0.1">
             `;
             
             paramsList.appendChild(paramDiv);
@@ -960,16 +1422,11 @@
             // Track this parameter ID with its initial name
             parameterIds[paramId] = defaultName;
             
-            // Update min/max of slider if they change
-            const minInput = paramDiv.querySelector('.param-min');
-            const maxInput = paramDiv.querySelector('.param-max');
-            minInput.addEventListener('change', () => updateSliderRange(paramId));
-            maxInput.addEventListener('change', () => updateSliderRange(paramId));
-            
             // Listen for name changes
             const nameInput = paramDiv.querySelector('.param-name');
-            nameInput.addEventListener('change', () => updateParameter(paramId));
-            nameInput.addEventListener('input', () => updateParameter(paramId));
+            nameInput.addEventListener('change', () => {
+                updateParameter(paramId);
+            });
             
             updateParameter(paramId);
         }
@@ -1109,6 +1566,94 @@
         window.addEventListener('load', function() {
             loadExample('sin(x)');
         });
+
+        // Parameter Range Modal
+        function openParameterModal(paramId) {
+            const paramDiv = document.getElementById(paramId);
+            const minInput = paramDiv.querySelector('.param-min');
+            const maxInput = paramDiv.querySelector('.param-max');
+            const stepInput = paramDiv.querySelector('.param-step');
+            const nameInput = paramDiv.querySelector('.param-name');
+
+            const modal = document.getElementById('parameterModal');
+            const modalTitle = document.getElementById('modalParamName');
+            const modalMin = document.getElementById('modalParamMin');
+            const modalMax = document.getElementById('modalParamMax');
+            const modalStep = document.getElementById('modalParamStep');
+
+            modalTitle.textContent = nameInput.value;
+            modalMin.value = minInput.value;
+            modalMax.value = maxInput.value;
+            modalStep.value = stepInput.value || '0.1';
+
+            modal.classList.add('active');
+            modal.dataset.paramId = paramId;
+        }
+
+        function closeParameterModal() {
+            const modal = document.getElementById('parameterModal');
+            modal.classList.remove('active');
+        }
+
+        function saveParameterRange() {
+            const modal = document.getElementById('parameterModal');
+            const paramId = modal.dataset.paramId;
+            const paramDiv = document.getElementById(paramId);
+
+            const minInput = paramDiv.querySelector('.param-min');
+            const maxInput = paramDiv.querySelector('.param-max');
+            const stepInput = paramDiv.querySelector('.param-step');
+            const slider = paramDiv.querySelector('.param-slider');
+
+            const minVal = parseFloat(document.getElementById('modalParamMin').value) || -10;
+            const maxVal = parseFloat(document.getElementById('modalParamMax').value) || 10;
+            const stepVal = parseFloat(document.getElementById('modalParamStep').value) || 0.1;
+
+            minInput.value = minVal;
+            maxInput.value = maxVal;
+            stepInput.value = stepVal;
+
+            slider.min = minVal;
+            slider.max = maxVal;
+            slider.step = stepVal;
+
+            updateSliderRange(paramId);
+            closeParameterModal();
+        }
+
+        // Close modal when clicking outside
+        window.addEventListener('click', function(event) {
+            const modal = document.getElementById('parameterModal');
+            if (event.target === modal) {
+                closeParameterModal();
+            }
+        });
     </script>
+
+    <!-- Parameter Range Modal -->
+    <div id="parameterModal" class="parameter-modal">
+        <div class="parameter-modal-content">
+            <div class="parameter-modal-header">
+                <h3 id="modalParamName">a</h3>
+                <button class="parameter-modal-close" onclick="closeParameterModal()">✕</button>
+            </div>
+            <div class="modal-form-group">
+                <label>Min:</label>
+                <input type="number" id="modalParamMin" value="-10" step="0.1">
+            </div>
+            <div class="modal-form-group">
+                <label>Max:</label>
+                <input type="number" id="modalParamMax" value="10" step="0.1">
+            </div>
+            <div class="modal-form-group">
+                <label>Step:</label>
+                <input type="number" id="modalParamStep" value="0.1" step="0.01">
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" onclick="closeParameterModal()">Cancel</button>
+                <button class="modal-btn modal-btn-save" onclick="saveParameterRange()">Save</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

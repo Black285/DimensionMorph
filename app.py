@@ -3,16 +3,30 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('Agg')  # Use non-interactive backend
+# from mpl_toolkits.mplot3d import Axes3D
 from io import BytesIO
 import base64
 from matplotlib.figure import Figure
 import os
+import json
 import plotly.graph_objects as go
 
 app = Flask(__name__)
 
 def safe_eval(expression, x=None, y=None, parameters=None):
     """Safely evaluate mathematical expression with x, y variables and optional parameters"""
+    
+    # Helper function for product of generator/iterable
+    def safe_prod(iterable):
+        """Safely compute product of iterables, handling generators of arrays"""
+        result = None
+        for item in iterable:
+            if result is None:
+                result = item
+            else:
+                result = result * item
+        return result if result is not None else 1
+    
     # Create a safe namespace with common math functions
     safe_dict = {
         # Trigonometric functions
@@ -52,22 +66,35 @@ def safe_eval(expression, x=None, y=None, parameters=None):
         # Min/Max
         'min': np.minimum,
         'max': np.maximum,
+        # Series & aggregation
+        'sum': sum,
+        'prod': safe_prod,
+        'range': range,
         # Constants
         'pi': np.pi,
         'e': np.e,
     }
     try:
-        # Build the namespace with available variables
-        namespace = {**safe_dict}
-        if x is not None:
-            namespace['x'] = x
-        if y is not None:
-            namespace['y'] = y
-        if parameters is not None:
-            namespace.update(parameters)
+        # Build the globals dict with all available functions
+        globals_dict = safe_dict.copy()
         
-        result = eval(expression, {"__builtins__": {}}, namespace)
+        # Add variables
+        if x is not None:
+            globals_dict['x'] = x
+        if y is not None:
+            globals_dict['y'] = y
+        if parameters is not None:
+            globals_dict.update(parameters)
+        
+        # Validate syntax first
+        import ast
+        ast.parse(expression, mode='eval')
+        
+        # Evaluate with restricted builtins (empty dict restricts access but allows NumPy)
+        result = eval(expression, globals_dict, {})
         return result
+    except SyntaxError as e:
+        raise ValueError(f"Invalid expression syntax: {str(e)}")
     except Exception as e:
         raise ValueError(f"Error evaluating expression: {str(e)}")
 
@@ -75,16 +102,16 @@ def plot_function_transformation(expression, x_range=(-5, 5), num_points=500, pa
     """Generate plots for function in Cartesian, Polar (θ-r), and Polar (circular) coordinates"""
     try:
         # Generate x values
-        x = np.linspace(x_range[0], x_range[1], num_points)
+        x = np.array(np.linspace(x_range[0], x_range[1], num_points), dtype=np.float64)
         
         # Evaluate function
         y = safe_eval(expression, x=x, parameters=parameters)
         
-        # Handle complex numbers or invalid results
+        # Ensure y is an array
         if isinstance(y, complex):
-            y = np.real(y)
-        elif not isinstance(y, np.ndarray):
-            y = np.array(y)
+            y = np.array(np.real(y), dtype=np.float64)
+        else:
+            y = np.asarray(y, dtype=np.float64)
         
         # Filter out NaN and inf values
         valid_mask = np.isfinite(y) & np.isfinite(x)
@@ -193,6 +220,103 @@ def plot_function_transformation(expression, x_range=(-5, 5), num_points=500, pa
     except Exception as e:
         return None, str(e)
 
+def plot_3d_matplotlib(expression, x_range=(-3, 3), y_range=(-3, 3), num_points=30, parameters=None):
+    """Generate matplotlib 3D plots as base64 images"""
+    try:
+        # Generate x, y mesh
+        x = np.linspace(x_range[0], x_range[1], num_points)
+        y = np.linspace(y_range[0], y_range[1], num_points)
+        X, Y = np.meshgrid(x, y)
+        
+        # Evaluate function with both x and y
+        Z = safe_eval(expression, x=X, y=Y, parameters=parameters)
+        if isinstance(Z, (int, float)):
+            Z = np.full_like(X, Z, dtype=float)
+        
+        # Handle complex numbers
+        if np.iscomplexobj(Z):
+            Z = np.real(Z)
+        
+        # Filter out NaN and inf values
+        valid_mask = np.isfinite(Z)
+        if not np.any(valid_mask):
+            raise ValueError("Function produced no valid values in the given range")
+        
+        images = []
+        
+        # PLOT 1: Original Cartesian 3D
+        fig = plt.figure(figsize=(6, 6))
+        ax = fig.add_subplot(111, projection='3d')
+        ax.plot_surface(X, Y, Z, cmap='viridis', alpha=0.8)
+        ax.set_xlabel('x')
+        ax.set_ylabel('y')
+        ax.set_zlabel('z')
+        ax.set_title('Original (Cartesian X-Y-Z)')
+        
+        buf = BytesIO()
+        fig.savefig(buf, format='png', dpi=100, bbox_inches='tight')
+        buf.seek(0)
+        img_base64 = base64.b64encode(buf.read()).decode('utf-8')
+        images.append(img_base64)
+        plt.close(fig)
+        
+        # PLOT 2: Spherical coordinates as Cartesian scatter
+        r = np.sqrt(X**2 + Y**2 + Z**2)
+        theta = np.arctan2(Y, X)
+        phi = np.arccos(np.clip(Z / r, -1, 1))
+        
+        fig = plt.figure(figsize=(6, 6))
+        ax = fig.add_subplot(111, projection='3d')
+        scatter = ax.scatter(r.flatten(), theta.flatten(), phi.flatten(), c=r.flatten(), cmap='plasma', s=10)
+        ax.set_xlabel('r (radius)')
+        ax.set_ylabel('θ (azimuthal)')
+        ax.set_zlabel('φ (polar)')
+        ax.set_title('Spherical (r-θ-φ Cartesian)')
+        fig.colorbar(scatter, ax=ax, label='r')
+        
+        buf = BytesIO()
+        fig.savefig(buf, format='png', dpi=100, bbox_inches='tight')
+        buf.seek(0)
+        img_base64 = base64.b64encode(buf.read()).decode('utf-8')
+        images.append(img_base64)
+        plt.close(fig)
+        
+        # PLOT 3: Data projected on sphere
+        r_max = np.max(r)
+        if r_max > 0:
+            r_norm = r / r_max
+        else:
+            r_norm = r
+        r_sphere = 1 + 0.3 * r_norm
+        
+        X_sph = r_sphere * np.sin(phi) * np.cos(theta)
+        Y_sph = r_sphere * np.sin(phi) * np.sin(theta)
+        Z_sph = r_sphere * np.cos(phi)
+        
+        fig = plt.figure(figsize=(6, 6))
+        ax = fig.add_subplot(111, projection='3d')
+        scatter = ax.scatter(X_sph.flatten(), Y_sph.flatten(), Z_sph.flatten(), c=r.flatten(), cmap='coolwarm', s=10)
+        ax.set_xlabel('x')
+        ax.set_ylabel('y')
+        ax.set_zlabel('z')
+        ax.set_title('Spherical (Data on Sphere)')
+        ax.set_xlim([-1.5, 1.5])
+        ax.set_ylim([-1.5, 1.5])
+        ax.set_zlim([-1.5, 1.5])
+        fig.colorbar(scatter, ax=ax, label='r')
+        
+        buf = BytesIO()
+        fig.savefig(buf, format='png', dpi=100, bbox_inches='tight')
+        buf.seek(0)
+        img_base64 = base64.b64encode(buf.read()).decode('utf-8')
+        images.append(img_base64)
+        plt.close(fig)
+        
+        return images, None
+    
+    except Exception as e:
+        return None, str(e)
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -229,8 +353,16 @@ def plot_3d_function_transformation(expression, x_range=(-3, 3), y_range=(-3, 3)
         theta = np.arctan2(Y, X)
         phi = np.arccos(Z / np.clip(r, 1e-10, None))
         
+        # CRITICAL: Convert numpy arrays to Python lists for JSON serialization
+        X_list = X.tolist()
+        Y_list = Y.tolist()
+        Z_list = Z.tolist()
+        r_flat_list = r.flatten().tolist()
+        theta_flat_list = theta.flatten().tolist()
+        phi_flat_list = phi.flatten().tolist()
+        
         # ===== PLOT 1: Original Cartesian 3D (Surface) =====
-        fig1 = go.Figure(data=[go.Surface(x=X, y=Y, z=Z, colorscale='viridis', name='Surface')])
+        fig1 = go.Figure(data=[go.Surface(x=X_list, y=Y_list, z=Z_list, colorscale='viridis', name='Surface')])
         fig1.update_layout(
             title='1. Original (Cartesian X-Y-Z)',
             scene=dict(
@@ -238,19 +370,19 @@ def plot_3d_function_transformation(expression, x_range=(-3, 3), y_range=(-3, 3)
                 yaxis_title='y',
                 zaxis_title='z'
             ),
-            width=600,
-            height=600
+            autosize=True,
+            margin=dict(l=50, r=50, t=50, b=50)
         )
         
         # ===== PLOT 2: Spherical as Cartesian axes (r, theta, phi) =====
         fig2 = go.Figure(data=[go.Scatter3d(
-            x=r.flatten(),
-            y=theta.flatten(),
-            z=phi.flatten(),
+            x=r_flat_list,
+            y=theta_flat_list,
+            z=phi_flat_list,
             mode='markers',
             marker=dict(
                 size=3,
-                color=r.flatten(),
+                color=r_flat_list,
                 colorscale='plasma',
                 showscale=True,
                 colorbar=dict(title="r")
@@ -264,8 +396,8 @@ def plot_3d_function_transformation(expression, x_range=(-3, 3), y_range=(-3, 3)
                 yaxis_title='θ (azimuthal)',
                 zaxis_title='φ (polar)'
             ),
-            width=600,
-            height=600
+            autosize=True,
+            margin=dict(l=50, r=50, t=50, b=50)
         )
         
         # ===== PLOT 3: Data projected on sphere =====
@@ -282,13 +414,13 @@ def plot_3d_function_transformation(expression, x_range=(-3, 3), y_range=(-3, 3)
         
         fig3 = go.Figure(data=[
             go.Scatter3d(
-                x=X_sph.flatten(),
-                y=Y_sph.flatten(),
-                z=Z_sph.flatten(),
+                x=X_sph.flatten().tolist(),
+                y=Y_sph.flatten().tolist(),
+                z=Z_sph.flatten().tolist(),
                 mode='markers',
                 marker=dict(
                     size=3,
-                    color=r.flatten(),
+                    color=r_flat_list,
                     colorscale='icefire',
                     showscale=True,
                     colorbar=dict(title="r")
@@ -305,7 +437,9 @@ def plot_3d_function_transformation(expression, x_range=(-3, 3), y_range=(-3, 3)
         z_sphere = np.outer(np.ones(np.size(u)), np.cos(v))
         
         fig3.add_trace(go.Surface(
-            x=x_sphere, y=y_sphere, z=z_sphere,
+            x=x_sphere.tolist(),
+            y=y_sphere.tolist(),
+            z=z_sphere.tolist(),
             opacity=0.15,
             colorscale='greys',
             showscale=False,
@@ -322,22 +456,42 @@ def plot_3d_function_transformation(expression, x_range=(-3, 3), y_range=(-3, 3)
                 yaxis=dict(range=[-1.5, 1.5]),
                 zaxis=dict(range=[-1.5, 1.5])
             ),
-            width=600,
-            height=600
+            autosize=True,
+            margin=dict(l=50, r=50, t=50, b=50)
         )
         
-        return [fig1.to_json(), fig2.to_json(), fig3.to_json()], None
+        return [json.dumps(fig1.to_dict()), json.dumps(fig2.to_dict()), json.dumps(fig3.to_dict())], None
     
     except Exception as e:
         return None, str(e)
+
+def parse_range_value(value, parameters=None):
+    """Parse a range value that can be a number or an expression like 'pi' or '2*pi'"""
+    try:
+        # Try direct float conversion first (fast path for numeric strings)
+        return float(value)
+    except (ValueError, TypeError):
+        # If that fails, try evaluating as an expression
+        try:
+            result = safe_eval(str(value), parameters=parameters)
+            # Convert result to scalar if it's an array
+            if isinstance(result, np.ndarray):
+                result = result.item()
+            return float(result)
+        except Exception as e:
+            raise ValueError(f"Invalid range value '{value}': {str(e)}")
 
 @app.route('/plot', methods=['POST'])
 def plot():
     data = request.json
     expression = data.get('expression', 'sin(x)')
-    x_min = float(data.get('x_min', -5))
-    x_max = float(data.get('x_max', 5))
     parameters = data.get('parameters', {})
+    
+    try:
+        x_min = parse_range_value(data.get('x_min', -5), parameters)
+        x_max = parse_range_value(data.get('x_max', 5), parameters)
+    except ValueError as e:
+        return jsonify({'success': False, 'error': str(e)})
     
     images, error = plot_function_transformation(expression, (x_min, x_max), parameters=parameters)
     
@@ -352,22 +506,23 @@ def plot_data():
     try:
         data = request.json
         expression = data.get('expression', 'sin(x)')
-        x_min = float(data.get('x_min', -5))
-        x_max = float(data.get('x_max', 5))
         parameters = data.get('parameters', {})
+        
+        x_min = parse_range_value(data.get('x_min', -5), parameters)
+        x_max = parse_range_value(data.get('x_max', 5), parameters)
         num_points = 500
         
         # Generate x values
-        x = np.linspace(x_min, x_max, num_points)
+        x = np.array(np.linspace(x_min, x_max, num_points), dtype=np.float64)
         
         # Evaluate function
         y = safe_eval(expression, x=x, parameters=parameters)
         
-        # Handle complex numbers or invalid results
+        # Ensure y is an array
         if isinstance(y, complex):
-            y = np.real(y)
-        elif not isinstance(y, np.ndarray):
-            y = np.array(y)
+            y = np.array(np.real(y), dtype=np.float64)
+        else:
+            y = np.asarray(y, dtype=np.float64)
         
         # Filter out NaN and inf values
         valid_mask = np.isfinite(y) & np.isfinite(x)
@@ -380,6 +535,22 @@ def plot_data():
         # Transform to polar coordinates
         r = np.sqrt(x_valid**2 + y_valid**2)
         theta = np.arctan2(y_valid, x_valid)
+        
+        # Plot 3: For polar circular plot, create a full theta domain (0 to 2π) and evaluate function there
+        theta_domain = np.linspace(0, 2 * np.pi, 500)
+        r_polar = safe_eval(expression, x=theta_domain, parameters=parameters)
+        
+        # Handle result type and convert to array
+        if isinstance(r_polar, complex):
+            r_polar = np.real(r_polar)
+        elif not isinstance(r_polar, np.ndarray):
+            r_polar = np.array(r_polar)
+        
+        # Use absolute value to show full amplitude
+        r_polar = np.abs(r_polar)
+        
+        # Convert theta from radians to degrees for Plotly scatterpolar (expects degrees by default)
+        theta_degrees = np.degrees(theta_domain)
         
         # Create traces for Plotly
         traces = []
@@ -437,23 +608,30 @@ def plot_data():
                 'showlegend': False
             })
         
-        # Plot 3: Polar circular
-        x_normalized = (x_valid - x_valid.min()) / (x_valid.max() - x_valid.min()) * 2 * np.pi
-        r_func = np.abs(y_valid)
-        
-        traces.append({
-            'r': r_func.tolist(),
-            'theta': x_normalized.tolist(),
+        # Plot 3: Polar circular (evaluate function in polar domain 0 to 2π)
+        plot3_traces = [{
+            'r': r_polar.tolist(),
+            'theta': theta_degrees.tolist(),
             'type': 'scatterpolar',
             'mode': 'lines+markers',
             'name': 'Polar (circular)',
             'line': {'color': '#51cf66', 'width': 2},
             'marker': {'size': 3, 'opacity': 0.3}
-        })
+        }]
+        
+        # Build plot2_traces list
+        plot2_traces = []
+        if len(discontinuities) == 0:
+            plot2_traces = [traces[1]]
+        else:
+            # traces[1:] contains all the split traces for plot 2
+            plot2_traces = traces[1:]
         
         return jsonify({
             'success': True,
-            'traces': traces,
+            'plot1_traces': [traces[0]],
+            'plot2_traces': plot2_traces,
+            'plot3_traces': plot3_traces,
             'layout1': {
                 'title': '1. Original (Cartesian)',
                 'xaxis': {'title': 'x'},
@@ -481,20 +659,65 @@ def plot_data():
 
 @app.route('/plot3d', methods=['POST'])
 def plot3d():
-    data = request.json
-    expression = data.get('expression', 'sin(x)*cos(y)')
-    x_min = float(data.get('x_min', -3))
-    x_max = float(data.get('x_max', 3))
-    y_min = float(data.get('y_min', -3))
-    y_max = float(data.get('y_max', 3))
-    parameters = data.get('parameters', {})
+    try:
+        data = request.json
+        expression = data.get('expression', 'sin(x)*cos(y)')
+        parameters = data.get('parameters', {})
+        render_format = data.get('render_format', 'plotly')  # 'plotly' or 'images'
+        
+        print(f"DEBUG: /plot3d called with expression: {expression}")
+        print(f"DEBUG: Render format: {render_format}")
+        
+        try:
+            x_min = parse_range_value(data.get('x_min', -3), parameters)
+            x_max = parse_range_value(data.get('x_max', 3), parameters)
+            y_min = parse_range_value(data.get('y_min', -3), parameters)
+            y_max = parse_range_value(data.get('y_max', 3), parameters)
+        except ValueError as e:
+            print(f"DEBUG: Range parsing error: {e}")
+            return jsonify({'success': False, 'error': str(e)})
+        
+        print(f"DEBUG: Ranges - x: [{x_min}, {x_max}], y: [{y_min}, {y_max}]")
+        
+        # Choose which function to use based on render format
+        if render_format == 'images':
+            images, error = plot_3d_matplotlib(expression, (x_min, x_max), (y_min, y_max), parameters=parameters)
+            print(f"DEBUG: Using matplotlib 3D rendering")
+        else:
+            images, error = plot_3d_function_transformation(expression, (x_min, x_max), (y_min, y_max), parameters=parameters)
+            print(f"DEBUG: Using Plotly 3D rendering")
+        
+        if error:
+            print(f"DEBUG: 3D plotting error: {error}")
+            return jsonify({'success': False, 'error': error})
+        
+        print(f"DEBUG: Successfully generated {len(images)} plots")
+        
+        # Save images to disk for debugging
+        if render_format == 'images':
+            with open('plot1_3d.png', 'wb') as f:
+                f.write(base64.b64decode(images[0]))
+            with open('plot2_3d.png', 'wb') as f:
+                f.write(base64.b64decode(images[1]))
+            with open('plot3_3d.png', 'wb') as f:
+                f.write(base64.b64decode(images[2]))
+            print("DEBUG: Saved 3D plots to plot1_3d.png, plot2_3d.png, plot3_3d.png")
+        else:
+            with open('plot1_3d.json', 'w') as f:
+                f.write(images[0])
+            with open('plot2_3d.json', 'w') as f:
+                f.write(images[1])
+            with open('plot3_3d.json', 'w') as f:
+                f.write(images[2])
+            print("DEBUG: Saved 3D plots to plot1_3d.json, plot2_3d.json, plot3_3d.json")
+        
+        return jsonify({'success': True, 'images': images})
     
-    images, error = plot_3d_function_transformation(expression, (x_min, x_max), (y_min, y_max), parameters=parameters)
-    
-    if error:
-        return jsonify({'success': False, 'error': error})
-    
-    return jsonify({'success': True, 'images': images})
+    except Exception as e:
+        print(f"DEBUG: Unexpected error in /plot3d: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': f"Server error: {str(e)}"})
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
