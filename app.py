@@ -357,9 +357,9 @@ def plot_3d_function_transformation(expression, x_range=(-3, 3), y_range=(-3, 3)
         X_list = X.tolist()
         Y_list = Y.tolist()
         Z_list = Z.tolist()
-        r_flat_list = r.flatten().tolist()
-        theta_flat_list = theta.flatten().tolist()
-        phi_flat_list = phi.flatten().tolist()
+        r_list = r.tolist()
+        theta_list = theta.tolist()
+        phi_list = phi.tolist()
         
         # ===== PLOT 1: Original Cartesian 3D (Surface) =====
         fig1 = go.Figure(data=[go.Surface(x=X_list, y=Y_list, z=Z_list, colorscale='viridis', name='Surface')])
@@ -375,20 +375,7 @@ def plot_3d_function_transformation(expression, x_range=(-3, 3), y_range=(-3, 3)
         )
         
         # ===== PLOT 2: Spherical as Cartesian axes (r, theta, phi) =====
-        fig2 = go.Figure(data=[go.Scatter3d(
-            x=r_flat_list,
-            y=theta_flat_list,
-            z=phi_flat_list,
-            mode='markers',
-            marker=dict(
-                size=3,
-                color=r_flat_list,
-                colorscale='plasma',
-                showscale=True,
-                colorbar=dict(title="r")
-            ),
-            name='Data'
-        )])
+        fig2 = go.Figure(data=[go.Surface(x=r_list, y=theta_list, z=phi_list, colorscale='plasma', name='Surface')])
         fig2.update_layout(
             title='2. Spherical (r-θ-φ Cartesian)',
             scene=dict(
@@ -400,64 +387,197 @@ def plot_3d_function_transformation(expression, x_range=(-3, 3), y_range=(-3, 3)
             margin=dict(l=50, r=50, t=50, b=50)
         )
         
-        # ===== PLOT 3: Data projected on sphere =====
-        r_max = np.max(r)
-        if r_max > 0:
-            r_norm = r / r_max
-        else:
-            r_norm = r
-        r_sphere = 1 + 0.3 * r_norm
+        # ===== PLOT 3: 3D Spherical Surface =====
+        # Create a 3D surface in spherical coordinates where radius varies with both theta and phi
         
-        X_sph = r_sphere * np.sin(phi) * np.cos(theta)
-        Y_sph = r_sphere * np.sin(phi) * np.sin(theta)
-        Z_sph = r_sphere * np.cos(phi)
+        fig3 = go.Figure()
         
-        fig3 = go.Figure(data=[
-            go.Scatter3d(
-                x=X_sph.flatten().tolist(),
-                y=Y_sph.flatten().tolist(),
-                z=Z_sph.flatten().tolist(),
-                mode='markers',
-                marker=dict(
-                    size=3,
-                    color=r_flat_list,
-                    colorscale='icefire',
-                    showscale=True,
-                    colorbar=dict(title="r")
-                ),
-                name='Data'
-            )
-        ])
+        # Create a grid of theta and phi values
+        theta_grid = np.linspace(-np.pi, np.pi, 60)
+        phi_grid = np.linspace(0.1, np.pi - 0.1, 40)  # Avoid singularities at 0 and π
+        THETA, PHI = np.meshgrid(theta_grid, phi_grid)
         
-        # Add sphere wireframe to plot 3
-        u = np.linspace(0, 2 * np.pi, 20)
-        v = np.linspace(0, np.pi, 15)
-        x_sphere = np.outer(np.cos(u), np.sin(v))
-        y_sphere = np.outer(np.sin(u), np.sin(v))
-        z_sphere = np.outer(np.ones(np.size(u)), np.cos(v))
+        # Evaluate function at each (theta, phi) point
+        R = safe_eval(expression, x=THETA, y=PHI, parameters=parameters)
+        if isinstance(R, (int, float)):
+            R = np.full_like(THETA, R)
+        R = np.abs(np.asarray(R, dtype=float))
         
+        # Normalize radius for visualization (prevent too large/small values)
+        r_max = np.max(np.abs(R)) + 1e-6
+        r_norm = np.abs(R) / r_max
+        
+        # Convert spherical coordinates to Cartesian
+        X_sphere = r_norm * np.sin(PHI) * np.cos(THETA)
+        Y_sphere = r_norm * np.sin(PHI) * np.sin(THETA)
+        Z_sphere = r_norm * np.cos(PHI)
+        
+        # Create the 3D surface
         fig3.add_trace(go.Surface(
-            x=x_sphere.tolist(),
-            y=y_sphere.tolist(),
-            z=z_sphere.tolist(),
-            opacity=0.15,
-            colorscale='greys',
-            showscale=False,
-            name='Sphere'
+            x=X_sphere.tolist(),
+            y=Y_sphere.tolist(),
+            z=Z_sphere.tolist(),
+            colorscale='Viridis',
+            colorbar=dict(title='r'),
+            name='Spherical Surface',
+            hoverinfo='skip'
+        ))
+        
+        # Add reference grid circles for context (theta plane)
+        num_grid_circles = 5
+        for grid_idx in range(1, num_grid_circles + 1):
+            radius_frac = grid_idx / num_grid_circles
+            theta_ref = np.linspace(0, 2*np.pi, 100)
+            x_ref = radius_frac * np.cos(theta_ref)
+            y_ref = radius_frac * np.sin(theta_ref)
+            z_ref = np.zeros_like(theta_ref)
+            
+            fig3.add_trace(go.Scatter3d(
+                x=x_ref.tolist(),
+                y=y_ref.tolist(),
+                z=z_ref.tolist(),
+                mode='lines',
+                line=dict(color='rgba(0, 0, 0, 0.3)', width=1),
+                showlegend=False,
+                hoverinfo='skip'
+            ))
+        
+        # Add reference radial lines (theta plane)
+        num_radii_theta = 12
+        for i in range(num_radii_theta):
+            angle = (i / num_radii_theta) * 2 * np.pi
+            x_rad = [0, np.cos(angle)]
+            y_rad = [0, np.sin(angle)]
+            z_rad = [0, 0]
+            
+            fig3.add_trace(go.Scatter3d(
+                x=x_rad,
+                y=y_rad,
+                z=z_rad,
+                mode='lines',
+                line=dict(color='rgba(0, 0, 0, 0.3)', width=1),
+                showlegend=False,
+                hoverinfo='skip'
+            ))
+            
+            # Add angle label on theta plane
+            angle_deg = round(np.degrees(angle))
+            label_dist = 1.15
+            fig3.add_trace(go.Scatter3d(
+                x=[label_dist * np.cos(angle)],
+                y=[label_dist * np.sin(angle)],
+                z=[0],
+                mode='text',
+                text=[f'{angle_deg}°'],
+                textposition='middle center',
+                textfont=dict(size=8, color='blue'),
+                showlegend=False,
+                hoverinfo='skip'
+            ))
+        
+        # Add radius labels on theta plane
+        for grid_idx in range(1, num_grid_circles + 1):
+            radius_frac = grid_idx / num_grid_circles
+            fig3.add_trace(go.Scatter3d(
+                x=[radius_frac + 0.05],
+                y=[0],
+                z=[0],
+                mode='text',
+                text=[f'r={radius_frac:.1f}'],
+                textposition='middle center',
+                textfont=dict(size=8, color='blue'),
+                showlegend=False,
+                hoverinfo='skip'
+            ))
+        
+        # Add reference grid circles for phi plane
+        for grid_idx in range(1, num_grid_circles + 1):
+            radius_frac = grid_idx / num_grid_circles
+            phi_ref = np.linspace(0, 2*np.pi, 100)
+            x_ref = radius_frac * np.cos(phi_ref)
+            y_ref = np.zeros_like(phi_ref)
+            z_ref = radius_frac * np.sin(phi_ref)
+            
+            fig3.add_trace(go.Scatter3d(
+                x=x_ref.tolist(),
+                y=y_ref.tolist(),
+                z=z_ref.tolist(),
+                mode='lines',
+                line=dict(color='rgba(0, 0, 0, 0.3)', width=1),
+                showlegend=False,
+                hoverinfo='skip'
+            ))
+        
+        # Add reference radial lines (phi plane)
+        num_radii_phi = 12
+        for i in range(num_radii_phi):
+            angle = (i / num_radii_phi) * 2 * np.pi
+            x_rad = [0, np.cos(angle)]
+            y_rad = [0, 0]
+            z_rad = [0, np.sin(angle)]
+            
+            fig3.add_trace(go.Scatter3d(
+                x=x_rad,
+                y=y_rad,
+                z=z_rad,
+                mode='lines',
+                line=dict(color='rgba(0, 0, 0, 0.3)', width=1),
+                showlegend=False,
+                hoverinfo='skip'
+            ))
+            
+            # Add angle label on phi plane
+            angle_deg = round(np.degrees(angle))
+            label_dist = 1.15
+            fig3.add_trace(go.Scatter3d(
+                x=[label_dist * np.cos(angle)],
+                y=[0],
+                z=[label_dist * np.sin(angle)],
+                mode='text',
+                text=[f'{angle_deg}°'],
+                textposition='middle center',
+                textfont=dict(size=8, color='red'),
+                showlegend=False,
+                hoverinfo='skip'
+            ))
+        
+        # Add radius labels on phi plane
+        for grid_idx in range(1, num_grid_circles + 1):
+            radius_frac = grid_idx / num_grid_circles
+            fig3.add_trace(go.Scatter3d(
+                x=[radius_frac + 0.05],
+                y=[0],
+                z=[0],
+                mode='text',
+                text=[f'r={radius_frac:.1f}'],
+                textposition='middle center',
+                textfont=dict(size=8, color='red'),
+                showlegend=False,
+                hoverinfo='skip'
+            ))
+        
+        # Add center point
+        fig3.add_trace(go.Scatter3d(
+            x=[0],
+            y=[0],
+            z=[0],
+            mode='markers',
+            marker=dict(size=8, color='black'),
+            name='Center',
+            hoverinfo='skip'
         ))
         
         fig3.update_layout(
-            title='3. Spherical (Data on Sphere)',
+            title='3. Spherical Surface (θ and φ angles)',
             scene=dict(
-                xaxis_title='x',
-                yaxis_title='y',
-                zaxis_title='z',
-                xaxis=dict(range=[-1.5, 1.5]),
-                yaxis=dict(range=[-1.5, 1.5]),
-                zaxis=dict(range=[-1.5, 1.5])
+                xaxis=dict(range=[-1.5, 1.5], showgrid=False, showbackground=False, showticklabels=False, zeroline=False, title=''),
+                yaxis=dict(range=[-1.5, 1.5], showgrid=False, showbackground=False, showticklabels=False, zeroline=False, title=''),
+                zaxis=dict(range=[-1.5, 1.5], showgrid=False, showbackground=False, showticklabels=False, zeroline=False, title=''),
+                aspectmode='cube'
             ),
             autosize=True,
-            margin=dict(l=50, r=50, t=50, b=50)
+            margin=dict(l=50, r=50, t=50, b=50),
+            showlegend=True
         )
         
         return [json.dumps(fig1.to_dict()), json.dumps(fig2.to_dict()), json.dumps(fig3.to_dict())], None

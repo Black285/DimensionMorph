@@ -29,7 +29,6 @@
             text-align: center;
             color: white;
             margin-bottom: 40px;
-            animation: slideDown 0.6s ease-out;
         }
         
         .header h1 {
@@ -69,7 +68,6 @@
             padding: 30px;
             border-radius: 10px 0 0 10px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            animation: slideRight 0.6s ease-out;
             overflow-y: auto;
             max-height: 100%;
         }
@@ -207,7 +205,6 @@
             padding: 20px;
             border-radius: 0 10px 10px 0;
             box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            animation: slideLeft 0.6s ease-out;
             overflow: hidden;
             display: flex;
             flex-direction: column;
@@ -224,9 +221,46 @@
             flex-shrink: 0;
         }
         
+        .plot-selector {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            background: white;
+            border: 1px solid #667eea;
+            border-radius: 3px;
+            padding: 4px;
+        }
+        
+        .plot-btn {
+            background: white;
+            border: none;
+            color: #667eea;
+            padding: 6px 12px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        .plot-btn:hover:not(.active) {
+            background: #f0f0f0;
+        }
+        
+        .plot-btn.active {
+            background: #667eea;
+            color: white;
+            border-radius: 2px;
+        }
+        
+        .plot-btn-separator {
+            color: #667eea;
+            margin: 0 -4px;
+            font-weight: 300;
+        }
+        
         .plots-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-columns: 1fr;
+            grid-auto-rows: 1fr;
             gap: 15px;
             flex: 1;
             overflow: auto;
@@ -239,10 +273,15 @@
             border-radius: 5px;
             position: relative;
             width: 100%;
-            display: block;
+            display: none !important;
             overflow: hidden;
             min-height: 400px;
             height: 100%;
+        }
+        
+        .plot-box.active {
+            display: grid !important;
+            min-height: unset;
         }
         
         .plot-image {
@@ -254,7 +293,6 @@
         
         .plot-image.show {
             display: block;
-            animation: fadeIn 0.5s ease-in;
         }
         
         /* Temporarily hide plots 1 and 2 for debugging */
@@ -918,7 +956,16 @@
             
             <!-- Plot Area -->
             <div class="plot-container">
-                <h2>Visualization</h2>
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+                    <h2>Visualization</h2>
+                    <div class="plot-selector">
+                        <button class="plot-btn active" data-plot="1">1</button>
+                        <span class="plot-btn-separator">|</span>
+                        <button class="plot-btn" data-plot="2">2</button>
+                        <span class="plot-btn-separator">|</span>
+                        <button class="plot-btn" data-plot="3">3</button>
+                    </div>
+                </div>
                 <div class="loading" id="loading">
                     <div class="spinner"></div>
                     <p>Generating plots...</p>
@@ -950,6 +997,82 @@
         };
         // ===== END CONFIGURATION =====
         
+        // Store plot data globally
+        let plotData2D = {
+            plot1_traces: null,
+            plot2_traces: null,
+            plot3_traces: null,
+            layout1: null,
+            layout2: null,
+            layout3: null
+        };
+        
+        // Store 3D plot data globally
+        let plotData3D = {
+            fig1: null,
+            fig2: null,
+            fig3: null
+        };
+        
+        // Function to render a single 2D plot
+        function renderPlot2D(plotNum) {
+            const plotId = 'plot' + plotNum;
+            const container = document.getElementById(plotId);
+            
+            if (!container) return;
+            
+            const tracesKey = 'plot' + plotNum + '_traces';
+            const layoutKey = 'layout' + plotNum;
+            
+            const traces = plotData2D[tracesKey];
+            const baseLayout = plotData2D[layoutKey];
+            
+            if (!traces || !baseLayout) return;
+            
+            // Purge existing plot
+            Plotly.purge(container);
+            container.innerHTML = '';
+            
+            // Get dimensions from visible container
+            const width = container.offsetWidth;
+            const height = container.offsetHeight || 600;
+            
+            // Create layout with proper sizing
+            const layout = Object.assign({}, baseLayout, {
+                width: Math.max(width - 20, 100),
+                height: Math.max(height - 20, 100),
+                autosize: true
+            });
+            
+            // Render the plot
+            Plotly.newPlot(container, traces, layout, {responsive: true});
+        }
+        
+        // Function to render a single 3D plot
+        function renderPlot3D(plotNum) {
+            const plotId = 'plot' + plotNum;
+            const container = document.getElementById(plotId);
+            
+            if (!container) return;
+            
+            const figKey = 'fig' + plotNum;
+            const fig = plotData3D[figKey];
+            
+            if (!fig) return;
+            
+            // Purge existing plot
+            Plotly.purge(container);
+            container.innerHTML = '';
+            
+            // Render the plot with responsive sizing
+            Plotly.newPlot(container, fig.data, fig.layout, {
+                responsive: true,
+                displayModeBar: true,
+                displaylogo: false,
+                modeBarButtonsToRemove: ['lasso2d', 'select2d']
+            });
+        }
+        
         function toggleMode() {
             const mode = document.getElementById('mode').value;
             const expr2d = document.getElementById('expression').value;
@@ -974,6 +1097,25 @@
             const plot1 = document.getElementById('plot1');
             const plot2 = document.getElementById('plot2');
             const plot3 = document.getElementById('plot3');
+            
+            // Reset plot selector to plot 1 when switching modes
+            const plotBtns = document.querySelectorAll('.plot-btn');
+            const plotBoxes = document.querySelectorAll('.plot-box');
+            plotBtns.forEach(btn => btn.classList.remove('active'));
+            if (plotBtns.length > 0) plotBtns[0].classList.add('active');
+            plotBoxes.forEach((box, idx) => {
+                box.classList.remove('active');
+            });
+            // Show only plot 1
+            if (plotBoxes.length > 0) {
+                plotBoxes[0].classList.add('active');
+            }
+            
+            // Clear existing plots
+            [plot1, plot2, plot3].forEach(div => {
+                try { Plotly.purge(div); } catch (e) {}
+                div.innerHTML = '';
+            });
             
             if (mode === '2d') {
                 if (RENDER_CONFIG['2d'] === 'images') {
@@ -1053,47 +1195,15 @@
                         showLoading(false);
                         if (data.success) {
                             try {
-                                // Get container elements
-                                const p1 = document.getElementById('plot1');
-                                const p2 = document.getElementById('plot2');
-                                const p3 = document.getElementById('plot3');
+                                // Store plot data globally
+                                plotData2D = data;
                                 
-                                // Purge existing plots
-                                Plotly.purge(p1);
-                                Plotly.purge(p2);
-                                Plotly.purge(p3);
-                                p1.innerHTML = '';
-                                p2.innerHTML = '';
-                                p3.innerHTML = '';
+                                // Get the currently active plot number
+                                const activeBtn = document.querySelector('.plot-btn.active');
+                                const activePlotNum = activeBtn ? activeBtn.dataset.plot : '1';
                                 
-                                // Get dimensions from containers
-                                const width1 = p1.offsetWidth;
-                                const height1 = p1.offsetHeight || 400;
-                                const width2 = p2.offsetWidth;
-                                const height2 = p2.offsetHeight || 400;
-                                const width3 = p3.offsetWidth;
-                                const height3 = p3.offsetHeight || 400;
-                                
-                                // Render plots with proper sizing
-                                const layout1 = Object.assign({}, data.layout1, {
-                                    width: Math.max(width1 - 20, 100),
-                                    height: Math.max(height1 - 20, 100),
-                                    autosize: true
-                                });
-                                const layout2 = Object.assign({}, data.layout2, {
-                                    width: Math.max(width2 - 20, 100),
-                                    height: Math.max(height2 - 20, 100),
-                                    autosize: true
-                                });
-                                const layout3 = Object.assign({}, data.layout3, {
-                                    width: Math.max(width3 - 20, 100),
-                                    height: Math.max(height3 - 20, 100),
-                                    autosize: true
-                                });
-                                
-                                Plotly.newPlot(p1, data.plot1_traces, layout1, {responsive: true});
-                                Plotly.newPlot(p2, data.plot2_traces, layout2, {responsive: true});
-                                Plotly.newPlot(p3, data.plot3_traces, layout3, {responsive: true});
+                                // Render only the active plot
+                                renderPlot2D(activePlotNum);
                                 
                                 showSuccess();
                             } catch (plotError) {
@@ -1203,105 +1313,32 @@
                             }
                         } else if (RENDER_CONFIG['3d'] === 'plotly') {
                             console.log('Using PLOTLY rendering for 3D');
-                            // Display 3 separate Plotly 3D plots
+                            // Display 3D Plotly plots
                             try {
                                 const fig1Data = data.images[0];
                                 const fig2Data = data.images[1];
                                 const fig3Data = data.images[2];
 
-                                console.log('Raw fig1Data length:', fig1Data.length);
-
                                 const fig1 = JSON.parse(fig1Data);
                                 const fig2 = JSON.parse(fig2Data);
                                 const fig3 = JSON.parse(fig3Data);
 
-                                console.log('Parsed figures:');
-                                console.log('Fig 1 - data count:', fig1.data ? fig1.data.length : 0, 'type:', fig1.data && fig1.data[0] ? fig1.data[0].type : 'none');
-                                if (fig1.data && fig1.data[0] && fig1.data[0].x) {
-                                    console.log('Fig 1 data[0].x length:', fig1.data[0].x.length, 'first value:', fig1.data[0].x[0]);
-                                }
+                                // Store plots globally
+                                plotData3D.fig1 = fig1;
+                                plotData3D.fig2 = fig2;
+                                plotData3D.fig3 = fig3;
+                                
+                                // Get the currently active plot number
+                                const activeBtn = document.querySelector('.plot-btn.active');
+                                const activePlotNum = activeBtn ? activeBtn.dataset.plot : '1';
+                                
+                                // Render only the active plot
+                                renderPlot3D(activePlotNum);
 
-                                // Get container elements
-                                const plot1Div = document.getElementById('plot1');
-                                const plot2Div = document.getElementById('plot2');
-                                const plot3Div = document.getElementById('plot3');
-
-                                // Clear existing plots
-                                [plot1Div, plot2Div, plot3Div].forEach(div => {
-                                    try { 
-                                        Plotly.purge(div); 
-                                    } catch (e) {
-                                        console.log('Purge note:', e.message);
-                                    }
-                                });
-
-                                // Render function with better error handling
-                                function renderPlotly(div, fig) {
-                                    return new Promise((resolve, reject) => {
-                                        setTimeout(() => {
-                                            try {
-                                                console.log('Rendering', div.id);
-                                                
-                                                // Validate data before rendering
-                                                if (!fig.data || fig.data.length === 0) {
-                                                    throw new Error('No data in figure');
-                                                }
-                                                
-                                                console.log('Calling Plotly.newPlot with:', {
-                                                    div_id: div.id,
-                                                    data_count: fig.data.length,
-                                                    data_type: fig.data[0].type,
-                                                    has_layout: !!fig.layout
-                                                });
-                                                
-                                                Plotly.newPlot(div, fig.data, fig.layout, {
-                                                    responsive: true, 
-                                                    displayModeBar: true,
-                                                    displaylogo: false,
-                                                    modeBarButtonsToRemove: ['lasso2d', 'select2d']
-                                                })
-                                                .then(() => {
-                                                    console.log('Plotly.newPlot complete for', div.id);
-                                                    setTimeout(() => {
-                                                        Plotly.Plots.resize(div);
-                                                        console.log('Resize complete for', div.id);
-                                                        resolve();
-                                                    }, 100);
-                                                })
-                                                .catch(e => {
-                                                    console.error('Plotly error for', div.id, ':', e);
-                                                    reject(e);
-                                                });
-                                            } catch (err) {
-                                                console.error('Error in renderPlotly for', div.id, ':', err);
-                                                reject(err);
-                                            }
-                                        }, 50);
-                                    });
-                                }
-
-                                console.log('Starting render sequence...');
-                                renderPlotly(plot1Div, fig1)
-                                    .then(() => {
-                                        console.log('Plot 1 done');
-                                        return renderPlotly(plot2Div, fig2);
-                                    })
-                                    .then(() => {
-                                        console.log('Plot 2 done');
-                                        return renderPlotly(plot3Div, fig3);
-                                    })
-                                    .then(() => {
-                                        console.log('All 3D plots rendered!');
-                                        showSuccess();
-                                    })
-                                    .catch(err => {
-                                        console.error('Error in render sequence:', err);
-                                        showError('Error rendering 3D plots: ' + err.message);
-                                    });
+                                showSuccess();
                             } catch (parseError) {
-                                showLoading(false);
-                                console.error('Parse error:', parseError);
-                                showError('Error rendering plots: ' + parseError.message);
+                                console.error('Error parsing 3D plots:', parseError);
+                                showError('Error rendering 3D plots: ' + parseError.message);
                             }
                         } else {
                             console.error('Unknown render format:', RENDER_CONFIG['3d']);
@@ -1628,6 +1665,52 @@
                 closeParameterModal();
             }
         });
+
+        // Plot selector functionality
+        function initPlotSelector() {
+            const plotBtns = document.querySelectorAll('.plot-btn');
+            const plotBoxes = document.querySelectorAll('.plot-box');
+            
+            plotBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const plotNum = this.dataset.plot;
+                    
+                    // Update button states
+                    plotBtns.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Update plot visibility using classes
+                    plotBoxes.forEach((box, index) => {
+                        box.classList.remove('active');
+                        if (box.id === 'plot' + plotNum) {
+                            box.classList.add('active');
+                        }
+                    });
+                    
+                    // Render the selected plot based on current mode
+                    const mode = document.getElementById('mode').value;
+                    setTimeout(() => {
+                        if (mode === '2d') {
+                            renderPlot2D(plotNum);
+                        } else {
+                            renderPlot3D(plotNum);
+                        }
+                    }, 50);
+                });
+            });
+            
+            // Set default: show plot 1
+            if (plotBoxes.length > 0) {
+                plotBoxes[0].classList.add('active');
+            }
+        }
+        
+        // Initialize plot selector when page loads
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initPlotSelector);
+        } else {
+            initPlotSelector();
+        }
     </script>
 
     <!-- Parameter Range Modal -->
