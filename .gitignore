@@ -1,2 +1,9 @@
 __pycache__/
-plot*.*
+*.py[cod]
+.venv/
+venv/
+.env
+.pytest_cache/
+.ruff_cache/
+plot*.json
+plot*.png
