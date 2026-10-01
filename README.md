@@ -131,3 +131,17 @@ The suite renders every coordinate system for every input, checks the
 invertible transforms against their closed forms, verifies that responses are
 strict JSON (`NaN` would be rejected by `JSON.parse`), and asserts that the
 sandbox refuses a list of known escape attempts.
+
+## Contributing
+
+Pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md); first-time
+contributors are asked to sign the [Contributor License Agreement](CLA.md).
+
+## License
+
+Copyright (C) 2026 Dumitru Mitu
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version. See [LICENSE](LICENSE) for the full text.
